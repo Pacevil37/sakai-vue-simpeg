@@ -6,7 +6,6 @@
             </button>
             <router-link to="/" class="layout-topbar-logo">
                 <img src="/kemenag-logo-freelogovectors.net_.png" alt="Logo Kemenag" style="height: 3rem;" />
-                <span>Kemenag Biak Numfor</span>
             </router-link>
         </div>
 
@@ -40,14 +39,6 @@
                     </div>
                 </div>
             </div>
-
-            <!-- Mobile menu button -->
-            <button
-                class="layout-topbar-menu-button layout-topbar-action"
-                v-styleclass="{ selector: '@next', enterFromClass: 'hidden', enterActiveClass: 'animate-scalein', leaveToClass: 'hidden', leaveActiveClass: 'animate-fadeout', hideOnOutsideClick: true }"
-            >
-                <i class="pi pi-ellipsis-v"></i>
-            </button>
         </div>
     </div>
 </template>
