@@ -1,111 +1,217 @@
 import AppLayout from '@/layout/AppLayout.vue';
+import { useAuthStore } from '@/stores/useAuthStore';
 import { createRouter, createWebHistory } from 'vue-router';
 
 const router = createRouter({
     history: createWebHistory(),
     routes: [
+        // ==================== ROUTE AUTHENTICATION ====================
+        {
+            path: '/auth/callback',
+            name: 'auth-callback',
+            component: () => import('@/pages/auth/callback.vue'),
+            meta: { requiresGuest: true }
+        },
+        {
+            path: '/auth/login',
+            name: 'login',
+            component: () => import('@/pages/auth/login.vue'),
+            meta: { requiresGuest: true }
+        },
+        {
+            path: '/auth/access',
+            name: 'accessDenied',
+            component: () => import('@/views/pages/auth/Access.vue')
+        },
+        {
+            path: '/auth/error',
+            name: 'error',
+            component: () => import('@/views/pages/auth/Error.vue')
+        },
+
+        // ==================== ROUTE UTAMA (DENGAN LAYOUT) ====================
         {
             path: '/',
             component: AppLayout,
+            meta: { requiresAuth: true },
             children: [
                 {
-                    path: '/',
+                    path: '',
                     name: 'dashboard',
                     component: () => import('@/views/Dashboard.vue')
                 },
+
+                // ---------- Manajemen Pegawai ----------
                 {
-                    path: '/uikit/formlayout',
-                    name: 'formlayout',
-                    component: () => import('@/views/uikit/FormLayout.vue')
+                    path: '/pegawai',
+                    name: 'pegawai',
+                    component: () => import('@/pages/pegawai/index.vue'),
+                    meta: { requiresAuth: true, roles: ['super_admin', 'admin_kepegawaian'] }
                 },
                 {
-                    path: '/uikit/input',
-                    name: 'input',
-                    component: () => import('@/views/uikit/InputDoc.vue')
+                    path: '/pegawai/create',
+                    name: 'pegawai-create',
+                    component: () => import('@/pages/pegawai/create.vue'),
+                    meta: { requiresAuth: true, roles: ['super_admin', 'admin_kepegawaian'] }
                 },
                 {
-                    path: '/uikit/button',
-                    name: 'button',
-                    component: () => import('@/views/uikit/ButtonDoc.vue')
+                    path: '/pegawai/:id',
+                    name: 'pegawai-detail',
+                    component: () => import('@/pages/pegawai/detail.vue'),
+                    meta: { requiresAuth: true }
                 },
                 {
-                    path: '/uikit/table',
-                    name: 'table',
-                    component: () => import('@/views/uikit/TableDoc.vue')
+                    path: '/pegawai/:id/edit',
+                    name: 'pegawai-edit',
+                    component: () => import('@/pages/pegawai/edit.vue'),
+                    meta: { requiresAuth: true, roles: ['super_admin', 'admin_kepegawaian'] }
                 },
                 {
-                    path: '/uikit/list',
-                    name: 'list',
-                    component: () => import('@/views/uikit/ListDoc.vue')
+                    path: '/pegawai/profil',
+                    name: 'pegawai-profil',
+                    component: () => import('@/pages/pegawai/ProfilPegawai.vue'),
+                    meta: { requiresAuth: true, roles: ['pegawai'] }
                 },
                 {
-                    path: '/uikit/tree',
-                    name: 'tree',
-                    component: () => import('@/views/uikit/TreeDoc.vue')
-                },
-                {
-                    path: '/uikit/panel',
-                    name: 'panel',
-                    component: () => import('@/views/uikit/PanelsDoc.vue')
+                    path: '/pegawai/register',
+                    name: 'pegawai-register',
+                    component: () => import('@/pages/pegawai/register.vue'),
+                    meta: { requiresGuest: true }
                 },
 
+                // ---------- Riwayat Pegawai (untuk pegawai sendiri) ----------
                 {
-                    path: '/uikit/overlay',
-                    name: 'overlay',
-                    component: () => import('@/views/uikit/OverlayDoc.vue')
+                    path: '/pegawai/riwayat-pendidikan',
+                    name: 'pegawai-riwayat-pendidikan',
+                    component: () => import('@/pages/pegawai/RiwayatPendidikan.vue'),
+                    meta: { requiresAuth: true, roles: ['pegawai', 'super_admin', 'admin_kepegawaian'] }
                 },
                 {
-                    path: '/uikit/media',
-                    name: 'media',
-                    component: () => import('@/views/uikit/MediaDoc.vue')
+                    path: '/pegawai/riwayat-diklat',
+                    name: 'pegawai-riwayat-diklat',
+                    component: () => import('@/pages/pegawai/RiwayatDiklat.vue'),
+                    meta: { requiresAuth: true, roles: ['pegawai', 'super_admin', 'admin_kepegawaian'] }
                 },
                 {
-                    path: '/uikit/message',
-                    name: 'message',
-                    component: () => import('@/views/uikit/MessagesDoc.vue')
+                    path: '/pegawai/mutasi',
+                    name: 'pegawai-mutasi',
+                    component: () => import('@/pages/pegawai/MutasiPegawai.vue'),
+                    meta: { requiresAuth: true, roles: ['pegawai', 'super_admin', 'admin_kepegawaian'] }
                 },
                 {
-                    path: '/uikit/file',
-                    name: 'file',
-                    component: () => import('@/views/uikit/FileDoc.vue')
+                    path: '/pegawai/kinerja',
+                    name: 'pegawai-kinerja',
+                    component: () => import('@/pages/pegawai/KinerjaPegawai.vue'),
+                    meta: { requiresAuth: true, roles: ['pegawai'] }
                 },
                 {
-                    path: '/uikit/menu',
-                    name: 'menu',
-                    component: () => import('@/views/uikit/MenuDoc.vue')
+                    path: '/pegawai/kgb',
+                    name: 'pegawai-kgb',
+                    component: () => import('@/pages/pegawai/KgbPegawai.vue'),
+                    meta: { requiresAuth: true, roles: ['pegawai', 'super_admin', 'admin_kepegawaian'] }
                 },
                 {
-                    path: '/uikit/charts',
-                    name: 'charts',
-                    component: () => import('@/views/uikit/ChartDoc.vue')
+                    path: '/pegawai/pensiun',
+                    name: 'pegawai-pensiun',
+                    component: () => import('@/pages/pegawai/PensiunPegawai.vue'),
+                    meta: { requiresAuth: true, roles: ['pegawai', 'super_admin', 'admin_kepegawaian'] }
+                },
+
+                // ---------- Admin: Master Data ----------
+                {
+                    path: '/admin/positions',
+                    name: 'admin-positions',
+                    component: () => import('@/pages/admin/positions.vue'),
+                    meta: { requiresAuth: true, roles: ['super_admin'] }
                 },
                 {
-                    path: '/uikit/misc',
-                    name: 'misc',
-                    component: () => import('@/views/uikit/MiscDoc.vue')
+                    path: '/admin/unit-kerja',
+                    name: 'admin-unit-kerja',
+                    component: () => import('@/pages/admin/unit-kerja.vue'),
+                    meta: { requiresAuth: true, roles: ['super_admin'] }
                 },
                 {
-                    path: '/uikit/timeline',
-                    name: 'timeline',
-                    component: () => import('@/views/uikit/TimelineDoc.vue')
+                    path: '/admin/riwayat-pendidikan',
+                    name: 'admin-riwayat-pendidikan',
+                    component: () => import('@/pages/admin/riwayat-pendidikan.vue'),
+                    meta: { requiresAuth: true, roles: ['super_admin', 'admin_kepegawaian'] }
                 },
                 {
-                    path: '/pages/empty',
-                    name: 'empty',
-                    component: () => import('@/views/pages/Empty.vue')
+                    path: '/admin/riwayat-diklat',
+                    name: 'admin-riwayat-diklat',
+                    component: () => import('@/pages/admin/riwayat-diklat.vue'),
+                    meta: { requiresAuth: true, roles: ['super_admin', 'admin_kepegawaian'] }
+                },
+
+                // ---------- Admin: Administrasi Kepegawaian ----------
+                {
+                    path: '/admin/mutasi',
+                    name: 'admin-mutasi',
+                    component: () => import('@/pages/admin/mutasi.vue'),
+                    meta: { requiresAuth: true, roles: ['super_admin', 'admin_kepegawaian'] }
                 },
                 {
-                    path: '/pages/crud',
-                    name: 'crud',
-                    component: () => import('@/views/pages/Crud.vue')
+                    path: '/admin/kgb',
+                    name: 'admin-kgb',
+                    component: () => import('@/pages/admin/kgb.vue'),
+                    meta: { requiresAuth: true, roles: ['super_admin', 'admin_kepegawaian'] }
                 },
                 {
-                    path: '/documentation',
-                    name: 'documentation',
-                    component: () => import('@/views/pages/Documentation.vue')
+                    path: '/admin/kinerja',
+                    name: 'admin-kinerja',
+                    component: () => import('@/pages/admin/kinerja.vue'),
+                    meta: { requiresAuth: true, roles: ['super_admin', 'admin_kepegawaian'] }
+                },
+                {
+                    path: '/admin/pensiun',
+                    name: 'admin-pensiun',
+                    component: () => import('@/pages/admin/pensiun.vue'),
+                    meta: { requiresAuth: true, roles: ['super_admin', 'admin_kepegawaian'] }
+                },
+
+                // ---------- Laporan ----------
+                {
+                    path: '/reports',
+                    name: 'reports',
+                    component: () => import('@/pages/reports/index.vue'),
+                    meta: { requiresAuth: true, roles: ['super_admin', 'admin_kepegawaian'] }
+                },
+                {
+                    path: '/reports/mutasi',
+                    name: 'reports-mutasi',
+                    component: () => import('@/pages/reports/index.vue'),
+                    meta: { requiresAuth: true, roles: ['super_admin', 'admin_kepegawaian'] }
+                },
+                {
+                    path: '/reports/kinerja',
+                    name: 'reports-kinerja',
+                    component: () => import('@/pages/reports/index.vue'),
+                    meta: { requiresAuth: true, roles: ['super_admin', 'admin_kepegawaian'] }
+                },
+
+                // ---------- Admin: Sistem (Super Admin only) ----------
+                {
+                    path: '/admin/users',
+                    name: 'admin-users',
+                    component: () => import('@/pages/admin/users.vue'),
+                    meta: { requiresAuth: true, roles: ['super_admin'] }
+                },
+                {
+                    path: '/admin/settings',
+                    name: 'admin-settings',
+                    component: () => import('@/pages/admin/settings.vue'),
+                    meta: { requiresAuth: true, roles: ['super_admin'] }
+                },
+                {
+                    path: '/admin/audit',
+                    name: 'admin-audit',
+                    component: () => import('@/pages/admin/audit.vue'),
+                    meta: { requiresAuth: true, roles: ['super_admin'] }
                 }
             ]
         },
+
+        // ==================== ROUTE TAMBAHAN (tanpa layout) ====================
         {
             path: '/landing',
             name: 'landing',
@@ -117,22 +223,44 @@ const router = createRouter({
             component: () => import('@/views/pages/NotFound.vue')
         },
 
+        // Redirect 404
         {
-            path: '/auth/login',
-            name: 'login',
-            component: () => import('@/views/pages/auth/Login.vue')
-        },
-        {
-            path: '/auth/access',
-            name: 'accessDenied',
-            component: () => import('@/views/pages/auth/Access.vue')
-        },
-        {
-            path: '/auth/error',
-            name: 'error',
-            component: () => import('@/views/pages/auth/Error.vue')
+            path: '/:pathMatch(.*)*',
+            redirect: '/pages/notfound'
         }
     ]
+});
+
+// Route guard
+router.beforeEach(async (to, from, next) => {
+    const authStore = useAuthStore();
+
+    // Pastikan store sudah diinisialisasi (dipanggil di main.js)
+    if (!authStore.isInitialized) {
+        await authStore.init();
+    }
+
+    if (to.meta.requiresAuth) {
+        if (!authStore.isAuthenticated) {
+            next({ name: 'login', query: { redirect: to.fullPath } });
+            return;
+        }
+
+        if (to.meta.roles && to.meta.roles.length > 0) {
+            const userRole = authStore.userRole;
+            if (!to.meta.roles.includes(userRole)) {
+                next({ name: 'accessDenied' });
+                return;
+            }
+        }
+    }
+
+    if (to.meta.requiresGuest && authStore.isAuthenticated) {
+        next({ name: 'dashboard' });
+        return;
+    }
+
+    next();
 });
 
 export default router;
