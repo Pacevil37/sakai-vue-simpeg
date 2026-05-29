@@ -215,19 +215,7 @@ onMounted(() => {
                     </form>
 
                     <!-- Tombol Login dengan Google -->
-                    <div class="google-login-wrapper">
-                        <div class="divider-text">atau</div>
-                        <Button 
-                            type="button"
-                            label="Login dengan Google"
-                            icon="pi pi-google"
-                            class="google-btn"
-                            :loading="googleLoading"
-                            @click="handleGoogleLogin"
-                            outlined
-                            severity="secondary"
-                        />
-                    </div>
+
 
                     <div class="form-footer">
                         <p>Belum terdaftar? <a href="#" class="operator-link">Hubungi Operator</a></p>

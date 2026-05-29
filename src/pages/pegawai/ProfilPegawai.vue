@@ -136,7 +136,182 @@
                 <label class="form-label"><i class="pi pi-book"></i> Institusi Pendidikan</label>
                 <InputText v-model="form.institusi" disabled class="form-input" />
               </div>
-              <div class="form-group">
+     <script setup>
+import { ref, onMounted } from 'vue';
+import { useLayout } from '@/layout/composables/layout';
+import { useAuthStore } from '@/stores/useAuthStore';
+import { useRouter } from 'vue-router';
+import { supabase } from '@/lib/supabase';
+import AppConfigurator from './AppConfigurator.vue';
+import Menu from 'primevue/menu';
+import Avatar from 'primevue/avatar';
+
+const { toggleMenu, toggleDarkMode, isDarkTheme } = useLayout();
+const authStore = useAuthStore();
+const router = useRouter();
+
+// State untuk profil
+const userAvatar = ref('');
+const userName = ref('');
+const userRole = ref('');
+const menu = ref(null);
+
+// Menu dropdown untuk profil (tanpa tombol logout terpisah)
+const menuItems = ref([
+    {
+        label: 'Profil Saya',
+        icon: 'pi pi-user',
+        command: () => router.push('/pegawai/profil')
+    },
+    {
+        separator: true
+    },
+    {
+        label: 'Logout',
+        icon: 'pi pi-sign-out',
+        command: async () => {
+            await authStore.logout();
+            router.push('/auth/login');
+        }
+    }
+]);
+
+// Ambil data pegawai dari database (foto & nama)
+const fetchUserProfile = async () => {
+    const email = authStore.user?.email;
+    if (!email) return;
+    try {
+        const { data, error } = await supabase
+            .from('pegawai')
+            .select('nama, foto_url')
+            .eq('email', email)
+            .maybeSingle();
+        if (!error && data) {
+            userName.value = data.nama || email.split('@')[0];
+            userAvatar.value = data.foto_url || '';
+        } else {
+            userName.value = email.split('@')[0];
+        }
+        userRole.value = authStore.userRole || 'Pegawai';
+    } catch (err) {
+        console.error('Gagal mengambil profil:', err);
+        userName.value = authStore.user?.email?.split('@')[0] || 'User';
+    }
+};
+
+// Toggle dropdown menu
+const toggleProfileMenu = (event) => {
+    menu.value?.toggle(event);
+};
+
+onMounted(() => {
+    fetchUserProfile();
+});
+</script>
+
+<template>
+    <div class="layout-topbar">
+        <div class="layout-topbar-logo-container">
+            <button class="layout-menu-button layout-topbar-action" @click="toggleMenu">
+                <i class="pi pi-bars"></i>
+            </button>
+            <router-link to="/" class="layout-topbar-logo">
+                <img src="/kemenag-logo-freelogovectors.net_.png" alt="Logo Kemenag" style="height: 3rem;" />
+                <span>Kemenag Biak Numfor</span>
+            </router-link>
+        </div>
+
+        <div class="layout-topbar-actions">
+            <!-- Dark mode & theme configurator -->
+            <div class="layout-config-menu">
+                <button type="button" class="layout-topbar-action" @click="toggleDarkMode">
+                    <i :class="['pi', { 'pi-moon': isDarkTheme, 'pi-sun': !isDarkTheme }]"></i>
+                </button>
+                <div class="relative">
+                    <button
+                        v-styleclass="{ selector: '@next', enterFromClass: 'hidden', enterActiveClass: 'animate-scalein', leaveToClass: 'hidden', leaveActiveClass: 'animate-fadeout', hideOnOutsideClick: true }"
+                        type="button"
+                        class="layout-topbar-action layout-topbar-action-highlight"
+                    >
+                        <i class="pi pi-palette"></i>
+                    </button>
+                    <AppConfigurator />
+                </div>
+            </div>
+
+            <!-- Profile Avatar + Dropdown (satu-satunya akses logout) -->
+            <div v-if="authStore.isAuthenticated" class="layout-topbar-profile">
+                <button class="layout-topbar-action profile-trigger" @click="toggleProfileMenu">
+                    <Avatar 
+                        :image="userAvatar" 
+                        :label="!userAvatar ? (userName.charAt(0) || 'U') : undefined" 
+                        shape="circle" 
+                        size="large"
+                        class="profile-avatar"
+                    />
+                    <span class="profile-name">{{ userName }}</span>
+                    <i class="pi pi-chevron-down"></i>
+                </button>
+                <Menu ref="menu" :model="menuItems" :popup="true" />
+            </div>
+
+            <!-- Tombol menu untuk mobile (tanpa tombol logout terpisah) -->
+            <button
+                class="layout-topbar-menu-button layout-topbar-action"
+                v-styleclass="{ selector: '@next', enterFromClass: 'hidden', enterActiveClass: 'animate-scalein', leaveToClass: 'hidden', leaveActiveClass: 'animate-fadeout', hideOnOutsideClick: true }"
+            >
+                <i class="pi pi-ellipsis-v"></i>
+            </button>
+
+            <!-- Menu tambahan untuk mobile (tidak ada logout di sini) -->
+            <div class="layout-topbar-menu hidden lg:block">
+                <div class="layout-topbar-menu-content">
+                    <div v-if="authStore.isAuthenticated" class="flex align-items-center gap-2 mr-3">
+                        <span class="text-sm font-medium">{{ userName }}</span>
+                        <span class="text-xs text-gray-500">({{ userRole }})</span>
+                    </div>
+                    <!-- Tidak ada tombol logout tambahan -->
+                </div>
+            </div>
+        </div>
+    </div>
+</template>
+
+<style scoped>
+.layout-topbar-profile {
+    display: flex;
+    align-items: center;
+    margin-left: 0.5rem;
+}
+.profile-trigger {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    padding: 0.25rem 0.5rem;
+    border-radius: 2rem;
+    transition: background-color 0.2s;
+}
+.profile-trigger:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+.profile-name {
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: var(--text-color);
+}
+.profile-avatar {
+    width: 2.5rem;
+    height: 2.5rem;
+    background: var(--primary-color);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+</style>         <div class="form-group">
                 <label class="form-label"><i class="pi pi-calendar-plus"></i> Tahun Lulus</label>
                 <InputNumber v-model="form.tahun_lulus" disabled class="form-input" />
               </div>
