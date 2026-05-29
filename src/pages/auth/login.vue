@@ -1,8 +1,8 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
-import { useAuthStore } from '@/stores/useAuthStore'; // pastikan store ini sudah menggunakan Supabase
-import { supabase } from '@/lib/supabase'; // untuk login Google
+import { useAuthStore } from '@/stores/useAuthStore'; 
+import { supabase } from '@/lib/supabase'; 
 import { useToast } from 'primevue/usetoast';
 import InputText from 'primevue/inputtext';
 import Password from 'primevue/password';
@@ -23,7 +23,7 @@ const form = ref({
 // Form validation
 const errors = ref({});
 const isLoading = ref(false);
-const googleLoading = ref(false); // loading state untuk tombol Google
+const googleLoading = ref(false); 
 
 // Computed
 const isFormValid = computed(() => {
@@ -49,13 +49,13 @@ const validateForm = () => {
     return Object.keys(errors.value).length === 0;
 };
 
-// Login dengan Email/Password (menggunakan store Supabase)
+// Login dengan Email/Password
 const handleLogin = async () => {
     if (!validateForm()) return;
 
     try {
         isLoading.value = true;
-        await authStore.login(form.value.email, form.value.password); // pastikan method login menerima email & password
+        await authStore.login(form.value.email, form.value.password); 
 
         toast.add({
             severity: 'success',
@@ -81,7 +81,7 @@ const handleLogin = async () => {
         });
 
         form.value.password = '';
-    } finally {
+    } finally { // <--- Sudah diperbaiki menjadi finally
         isLoading.value = false;
     }
 };
@@ -97,7 +97,6 @@ const handleGoogleLogin = async () => {
             }
         });
         if (error) throw error;
-        // Redirect akan ditangani oleh Supabase
     } catch (error) {
         toast.add({
             severity: 'error',
@@ -117,601 +116,132 @@ onMounted(() => {
 </script>
 
 <template>
-    <div class="login-page">
-        <!-- Background Elements -->
-        <div class="login-bg-layer"></div>
-        <div class="login-bg-pattern"></div>
-        <div class="login-bg-glow"></div>
+  <div class="min-h-screen w-full flex items-center justify-center relative bg-[#fafafa] font-sans antialiased overflow-hidden p-4 sm:p-6 lg:p-8">
+    
+    <div class="absolute inset-0 bg-[radial-gradient(50rem_50rem_at_center,theme(colors.emerald.50),white)] z-0"></div>
+    <div class="absolute inset-0 bg-[linear-gradient(to_right,#8080800a_1px,transparent_1px),linear-gradient(to_bottom,#8080800a_1px,transparent_1px)] bg-[size:14px_24px] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_50%,#000_70%,transparent_100%)] z-0"></div>
+    
+    <div class="absolute top-[-10%] right-[-10%] w-[50%] h-[50%] bg-emerald-200/30 rounded-full blur-3xl animate-pulse z-0"></div>
+    <div class="absolute bottom-[-10%] left-[-10%] w-[50%] h-[50%] bg-teal-200/20 rounded-full blur-3xl z-0"></div>
 
-        <div class="login-container">
-            <div class="login-card">
-                <!-- Visual Side (Branding) -->
-                <div class="login-visual">
-                    <div class="visual-content">
-                        <div class="logo-container">
-                            <div class="logo-bg-glow"></div>
-                            <img src="/kemenag-logo-freelogovectors.net_.png" alt="Logo Kemenag" class="app-logo" />
-                        </div>
-                        
-                        <div class="text-content">
-                            <h2 class="ministry-name">Kementerian Agama</h2>
-                            <h1 class="region-name">Kabupaten Biak Numfor</h1>
-                            <div class="divider"></div>
-                            <p class="app-name">SIMPEG</p>
-                            <p class="app-desc">Sistem Informasi Manajemen Kepegawaian</p>
-                        </div>
+    <div class="w-full max-w-5xl bg-white/80 backdrop-blur-xl border border-slate-200/80 rounded-[32px] shadow-2xl shadow-slate-200/50 flex flex-col md:flex-row overflow-hidden min-h-[680px] z-10">
+      
+      <div class="flex-1 bg-gradient-to-br from-slate-950 via-emerald-950 to-slate-950 p-8 lg:p-12 relative flex flex-col justify-between overflow-hidden text-white">
+        <div class="absolute inset-0 bg-[linear-gradient(to_right,#ffffff05_1px,transparent_1px),linear-gradient(to_bottom,#ffffff05_1px,transparent_1px)] bg-[size:20px_20px]"></div>
+        
+        <div class="absolute -top-20 -left-20 w-64 h-64 bg-emerald-500/10 rounded-full blur-2xl"></div>
+        <div class="absolute -bottom-20 -right-20 w-64 h-64 bg-teal-500/10 rounded-full blur-2xl"></div>
 
-                        <div class="visual-footer">
-                            <div class="feature-pills">
-                                <span class="pill"><i class="pi pi-check-circle"></i> Terintegrasi</span>
-                                <span class="pill"><i class="pi pi-shield"></i> Aman</span>
-                                <span class="pill"><i class="pi pi-bolt"></i> Cepat</span>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- Decorative Circles -->
-                    <div class="circle circle-1"></div>
-                    <div class="circle circle-2"></div>
-                    <div class="glass-overlay"></div>
-                </div>
+        <div class="relative z-10 text-center md:text-left space-y-6 my-auto md:my-0">
+          <div class="inline-flex p-4 bg-white/5 border border-white/10 rounded-2xl backdrop-blur-md shadow-xl">
+            <img src="/kemenag-logo-freelogovectors.net_.png" alt="Logo Kemenag" class="w-20 h-auto filter drop-shadow-md object-contain" />
+          </div>
+          
+          <div class="space-y-2">
+            <p class="text-xs font-bold text-emerald-400 uppercase tracking-widest">Kementerian Agama</p>
+            <h1 class="text-2xl lg:text-3xl font-black tracking-tight bg-gradient-to-r from-white via-slate-100 to-slate-300 bg-clip-text text-transparent">
+              Kabupaten Biak Numfor
+            </h1>
+            <div class="w-12 h-[3px] bg-emerald-500 rounded-full mx-auto md:mx-0 mt-4"></div>
+          </div>
 
-                <!-- Form Side -->
-                <div class="login-form-wrapper">
-                    <div class="form-header">
-                        <h3>Selamat Datang</h3>
-                        <p class="subtitle">Silakan masuk untuk melanjutkan</p>
-                    </div>
-
-                    <form class="login-form" @submit.prevent="handleLogin">
-                        <div class="form-group">
-                            <label for="email">Email / NIP</label>
-                            <div class="input-wrapper">
-                                <i class="pi pi-user input-icon"></i>
-                                <InputText 
-                                    id="email" 
-                                    v-model="form.email" 
-                                    placeholder="Masukkan Email atau NIP" 
-                                    class="custom-input" 
-                                    :class="{ 'p-invalid': errors.email }"
-                                />
-                            </div>
-                            <small class="error-msg" v-if="errors.email">{{ errors.email }}</small>
-                        </div>
-
-                        <div class="form-group">
-                            <label for="password">Kata Sandi</label>
-                            <div class="input-wrapper">
-                                <i class="pi pi-lock input-icon"></i>
-                                <Password 
-                                    id="password" 
-                                    v-model="form.password" 
-                                    placeholder="Masukkan kata sandi" 
-                                    class="custom-password" 
-                                    :class="{ 'p-invalid': errors.password }"
-                                    :feedback="false" 
-                                    toggleMask 
-                                />
-                            </div>
-                            <small class="error-msg" v-if="errors.password">{{ errors.password }}</small>
-                        </div>
-
-                        <div class="form-actions">
-                            <div class="remember-me">
-                                <Checkbox v-model="form.remember" binary inputId="remember" />
-                                <label for="remember">Ingat Saya</label>
-                            </div>
-                            <a href="#" class="forgot-pass">Lupa Sandi?</a>
-                        </div>
-
-                        <Button 
-                            type="submit" 
-                            label="Masuk Sekarang" 
-                            class="submit-btn" 
-                            :loading="isLoading" 
-                            icon="pi pi-arrow-right" 
-                            iconPos="right"
-                        />
-                    </form>
-
-                    <!-- Tombol Login dengan Google -->
-
-
-                    <div class="form-footer">
-                        <p>Belum terdaftar? <a href="#" class="operator-link">Hubungi Operator</a></p>
-                        <p class="copyright">&copy; {{ new Date().getFullYear() }} Kementerian Agama Kab. Biak Numfor</p>
-                    </div>
-                </div>
-            </div>
+          <div class="pt-4">
+            <h2 class="text-4xl font-extrabold tracking-wider text-white">SIMPEG</h2>
+            <p class="text-xs text-slate-400 font-medium tracking-wide mt-1">Sistem Informasi Manajemen Kepegawaian</p>
+          </div>
         </div>
+
+        <div class="relative z-10 hidden lg:block pt-8 border-t border-white/5">
+          <div class="flex flex-wrap gap-2.5">
+            <span class="px-3.5 py-1.5 bg-white/5 border border-white/10 rounded-xl text-xs font-semibold text-slate-200 flex items-center gap-2">
+              <i class="pi pi-check-circle text-emerald-400"></i> Terintegrasi
+            </span>
+            <span class="px-3.5 py-1.5 bg-white/5 border border-white/10 rounded-xl text-xs font-semibold text-slate-200 flex items-center gap-2">
+              <i class="pi pi-shield text-emerald-400"></i> Proteksi Aman
+            </span>
+            <span class="px-3.5 py-1.5 bg-white/5 border border-white/10 rounded-xl text-xs font-semibold text-slate-200 flex items-center gap-2">
+              <i class="pi pi-bolt text-emerald-400"></i> Akses Cepat
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <div class="flex-1 bg-white p-8 lg:p-12 flex flex-col justify-between">
+        
+        <div class="space-y-2 mb-8 md:mb-0">
+          <h3 class="text-2xl lg:text-3xl font-black tracking-tight text-slate-900">Selamat Datang</h3>
+          <p class="text-sm text-slate-500 font-medium">Silakan autentikasi akun Anda untuk masuk ke sistem</p>
+        </div>
+
+        <form @submit.prevent="handleLogin" class="space-y-5 my-auto py-4">
+          
+          <div class="space-y-1.5">
+            <label for="email" class="text-xs font-bold text-slate-700 uppercase tracking-wider">Email / NIP</label>
+            <div class="relative">
+              <i class="pi pi-user absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 text-sm z-10"></i>
+              <InputText 
+                id="email" 
+                v-model="form.email" 
+                placeholder="Masukkan Email atau NIP" 
+                class="w-full !pl-11 !pr-4 !py-3.5 !rounded-xl !border-slate-200 !bg-slate-50/50 focus:!bg-white focus:!border-emerald-600 focus:!shadow-[0_0_0_4px_rgba(16,185,129,0.1)] !transition-all !duration-200 !text-sm !font-medium"
+                :class="{ 'p-invalid !border-red-400': errors.email }"
+              />
+            </div>
+            <p v-if="errors.email" class="text-xs text-red-500 font-medium flex items-center gap-1.5 mt-1">
+              <i class="pi pi-exclamation-circle"></i> {{ errors.email }}
+            </p>
+          </div>
+
+          <div class="space-y-1.5">
+            <label for="password" class="text-xs font-bold text-slate-700 uppercase tracking-wider">Kata Sandi</label>
+            <div class="relative">
+              <i class="pi pi-lock absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 text-sm z-10"></i>
+              <Password 
+                id="password" 
+                v-model="form.password" 
+                placeholder="Masukkan kata sandi" 
+                class="w-full"
+                inputClass="w-full !pl-11 !pr-10 !py-3.5 !rounded-xl !border-slate-200 !bg-slate-50/50 focus:!bg-white focus:!border-emerald-600 focus:!shadow-[0_0_0_4px_rgba(16,185,129,0.1)] !transition-all !duration-200 !text-sm !font-medium"
+                :class="{ 'p-invalid !border-red-400': errors.password }"
+                :feedback="false" 
+                toggleMask 
+              />
+            </div>
+            <p v-if="errors.password" class="text-xs text-red-500 font-medium flex items-center gap-1.5 mt-1">
+              <i class="pi pi-exclamation-circle"></i> {{ errors.password }}
+            </p>
+          </div>
+
+          <div class="flex items-center justify-between text-xs pt-1">
+            <div class="flex items-center gap-2">
+              <Checkbox v-model="form.remember" binary inputId="remember" class="!rounded-md" />
+              <label for="remember" class="text-slate-600 font-semibold cursor-pointer select-none">Remember Me</label>
+            </div>
+            <a href="#" class="text-emerald-600 hover:text-emerald-700 font-bold hover:underline transition-colors">Lupa Sandi?</a>
+          </div>
+
+          <Button 
+            type="submit" 
+            label="Masuk Aplikasi" 
+            class="w-full !bg-slate-950 hover:!bg-emerald-600 !border-none !py-3.5 !rounded-xl !font-bold !text-sm !transition-all !duration-300 !shadow-sm hover:!shadow-lg hover:!shadow-emerald-600/10" 
+            :loading="isLoading" 
+            icon="pi pi-arrow-right" 
+            iconPos="right"
+          />
+
+
+        </form>
+
+        <div class="text-center pt-6 border-t border-slate-100/80 md:pt-0 md:border-none space-y-2">
+          <p class="text-xs text-slate-400 font-medium">
+            Belum terdaftar? <a href="#" class="text-emerald-600 hover:text-emerald-700 font-bold hover:underline transition-colors">Hubungi Administrator</a>
+          </p>
+          <p class="text-[10px] text-slate-400 font-medium">
+            &copy; 2026 Kementerian Agama Kab. Biak Numfor
+          </p>
+        </div>
+
+      </div>
     </div>
+  </div>
 </template>
-
-<style scoped>
-@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
-
-.login-page {
-    min-height: 100vh;
-    width: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    position: relative;
-    background-color: #f8fafc; /* White/Light gray background */
-    font-family: 'Plus Jakarta Sans', sans-serif;
-    overflow: hidden;
-}
-
-/* Background Effects */
-.login-bg-layer {
-    position: absolute;
-    inset: 0;
-    background: radial-gradient(circle at 50% 50%, #ffffff 0%, #f1f5f9 100%);
-    z-index: 0;
-}
-
-.login-bg-pattern {
-    position: absolute;
-    inset: 0;
-    background-image: linear-gradient(#3f6212 1px, transparent 1px),
-    linear-gradient(to right, #3f6212 1px, transparent 1px);
-    background-size: 60px 60px;
-    opacity: 0.03;
-    z-index: 1;
-}
-
-.login-bg-glow {
-    position: absolute;
-    top: -30%;
-    right: -10%;
-    width: 70%;
-    height: 70%;
-    background: radial-gradient(circle, rgba(63, 98, 18, 0.15) 0%, transparent 70%); /* Lime-800 glow */
-    filter: blur(100px);
-    z-index: 1;
-    animation: floatGlow 20s ease-in-out infinite alternate;
-}
-
-@keyframes floatGlow {
-    0% { transform: translate(0, 0); }
-    100% { transform: translate(-50px, 50px); }
-}
-
-/* Main Container */
-.login-container {
-    position: relative;
-    z-index: 10;
-    width: 100%;
-    max-width: 1100px;
-    padding: 2rem;
-}
-
-.login-card {
-    display: flex;
-    background: rgba(255, 255, 255, 0.7); /* More transparent for glass effect */
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    border-radius: 24px;
-    box-shadow: 
-        0 20px 25px -5px rgba(0, 0, 0, 0.05), 
-        0 8px 10px -6px rgba(0, 0, 0, 0.01),
-        0 0 0 1px rgba(255, 255, 255, 0.5); /* Subtle white border */
-    overflow: hidden;
-    min-height: 650px;
-}
-
-/* Visual Side (Left) */
-.login-visual {
-    flex: 1.2;
-    background: linear-gradient(135deg, #15803d 0%, #3f6212 100%);
-    position: relative;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 3rem;
-    color: white;
-    overflow: hidden;
-}
-
-.visual-content {
-    position: relative;
-    z-index: 5;
-    text-align: center;
-    width: 100%;
-    max-width: 400px;
-}
-
-.logo-container {
-    position: relative;
-    margin-bottom: 2.5rem;
-    display: inline-block;
-}
-
-.app-logo {
-    width: 140px;
-    height: auto;
-    filter: drop-shadow(0 4px 12px rgba(0,0,0,0.2));
-    position: relative;
-    z-index: 2;
-    transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-}
-
-.logo-container:hover .app-logo {
-    transform: scale(1.05);
-}
-
-.logo-bg-glow {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    width: 180px;
-    height: 180px;
-    background: radial-gradient(circle, rgba(255,255,255,0.2) 0%, transparent 70%);
-    filter: blur(20px);
-    z-index: 1;
-}
-
-.text-content {
-    margin-bottom: 3rem;
-}
-
-.ministry-name {
-    font-size: 1.25rem;
-    font-weight: 500;
-    margin: 0;
-    opacity: 0.9;
-    letter-spacing: 0.5px;
-    text-transform: uppercase;
-}
-
-.region-name {
-    font-size: 2rem;
-    font-weight: 800;
-    margin: 0.5rem 0 1.5rem;
-    background: linear-gradient(to right, #fcd34d, #fbbf24);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    text-shadow: 0 2px 4px rgba(0,0,0,0.1);
-}
-
-.divider {
-    height: 2px;
-    width: 60px;
-    background: rgba(255,255,255,0.3);
-    margin: 0 auto 1.5rem;
-    border-radius: 2px;
-}
-
-.app-name {
-    font-size: 2.5rem;
-    font-weight: 900;
-    margin: 0;
-    letter-spacing: 2px;
-    text-shadow: 0 2px 4px rgba(0,0,0,0.2);
-}
-
-.app-desc {
-    font-size: 0.95rem;
-    margin: 0.5rem 0 0;
-    opacity: 0.8;
-    font-weight: 300;
-}
-
-.feature-pills {
-    display: flex;
-    justify-content: center;
-    gap: 0.75rem;
-    flex-wrap: wrap;
-}
-
-.pill {
-    background: rgba(255,255,255,0.1);
-    backdrop-filter: blur(4px);
-    border: 1px solid rgba(255,255,255,0.2);
-    padding: 0.5rem 1rem;
-    border-radius: 50px;
-    font-size: 0.85rem;
-    font-weight: 500;
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    transition: all 0.3s ease;
-}
-
-.pill:hover {
-    background: rgba(255,255,255,0.2);
-    transform: translateY(-2px);
-}
-
-/* Decorative Elements Left */
-.circle {
-    position: absolute;
-    border-radius: 50%;
-    background: linear-gradient(135deg, rgba(255,255,255,0.1), rgba(255,255,255,0.05));
-    border: 1px solid rgba(255,255,255,0.1);
-}
-
-.circle-1 {
-    width: 300px;
-    height: 300px;
-    top: -100px;
-    left: -100px;
-}
-
-.circle-2 {
-    width: 200px;
-    height: 200px;
-    bottom: -50px;
-    right: -50px;
-}
-
-.glass-overlay {
-    position: absolute;
-    inset: 0;
-    background: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.05'/%3E%3C/svg%3E");
-    opacity: 0.4;
-    mix-blend-mode: overlay;
-    pointer-events: none;
-}
-
-/* Form Side (Right) */
-.login-form-wrapper {
-    flex: 1;
-    background: white;
-    padding: 4rem 3.5rem;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-}
-
-.form-header {
-    margin-bottom: 2.5rem;
-}
-
-.form-header h3 {
-    font-size: 2rem;
-    font-weight: 800;
-    color: #0f172a;
-    margin: 0 0 0.5rem 0;
-    letter-spacing: -0.5px;
-}
-
-.subtitle {
-    color: #64748b;
-    font-size: 1rem;
-    margin: 0;
-}
-
-.login-form {
-    display: flex;
-    flex-direction: column;
-    gap: 1.5rem;
-}
-
-.form-group {
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-}
-
-.form-group label {
-    font-size: 0.9rem;
-    font-weight: 600;
-    color: #334155;
-}
-
-.input-wrapper {
-    position: relative;
-}
-
-.input-icon {
-    position: absolute;
-    left: 1rem;
-    top: 50%;
-    transform: translateY(-50%);
-    color: #94a3b8;
-    z-index: 2;
-    font-size: 1.1rem;
-}
-
-:deep(.custom-input),
-:deep(.custom-password .p-inputtext) {
-    width: 100%;
-    padding: 0.875rem 1rem 0.875rem 2.75rem !important;
-    border-radius: 12px;
-    border: 1px solid #e2e8f0;
-    background: #f8fafc;
-    font-family: inherit;
-    transition: all 0.2s ease;
-}
-
-:deep(.custom-input:hover),
-:deep(.custom-password .p-inputtext:hover) {
-    border-color: #cbd5e1;
-    background: white;
-}
-
-:deep(.custom-input:focus),
-:deep(.custom-password .p-inputtext:focus) {
-    border-color: #15803d;
-    background: white;
-    box-shadow: 0 0 0 4px rgba(21, 128, 61, 0.1);
-}
-
-:deep(.p-password) {
-    width: 100%;
-}
-
-.error-msg {
-    color: #ef4444;
-    font-size: 0.85rem;
-    display: flex;
-    align-items: center;
-    gap: 0.25rem;
-}
-
-.form-actions {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-top: 0.5rem;
-}
-
-.remember-me {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-}
-
-.remember-me label {
-    font-size: 0.9rem;
-    color: #64748b;
-    cursor: pointer;
-    user-select: none;
-}
-
-.forgot-pass {
-    font-size: 0.9rem;
-    color: #15803d;
-    text-decoration: none;
-    font-weight: 600;
-    transition: color 0.2s;
-}
-
-.forgot-pass:hover {
-    color: #3f6212;
-    text-decoration: underline;
-}
-
-.submit-btn {
-    margin-top: 1rem;
-    background: linear-gradient(to right, #15803d, #3f6212) !important;
-    border: none !important;
-    padding: 1rem !important;
-    border-radius: 12px !important;
-    font-weight: 700 !important;
-    font-size: 1rem !important;
-    letter-spacing: 0.5px;
-    transition: transform 0.2s ease, box-shadow 0.2s ease !important;
-}
-
-.submit-btn:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 10px 20px -5px rgba(21, 128, 61, 0.3) !important;
-}
-
-.form-footer {
-    margin-top: auto;
-    text-align: center;
-    padding-top: 2rem;
-}
-
-.form-footer p {
-    color: #94a3b8;
-    font-size: 0.85rem;
-    margin: 0;
-}
-
-.operator-link {
-    color: #15803d;
-    text-decoration: none;
-    font-weight: 600;
-    transition: color 0.2s;
-}
-
-.operator-link:hover {
-    color: #3f6212;
-    text-decoration: underline;
-}
-
-.copyright {
-    margin-top: 0.5rem !important;
-    font-size: 0.8rem !important;
-    opacity: 0.8;
-}
-
-/* Tambahkan style untuk tombol Google dan divider */
-.google-login-wrapper {
-    margin-top: 1.5rem;
-    text-align: center;
-}
-
-.divider-text {
-    position: relative;
-    margin: 1rem 0;
-    font-size: 0.85rem;
-    color: #94a3b8;
-}
-.divider-text::before,
-.divider-text::after {
-    content: '';
-    position: absolute;
-    top: 50%;
-    width: 40%;
-    height: 1px;
-    background: #e2e8f0;
-}
-.divider-text::before {
-    left: 0;
-}
-.divider-text::after {
-    right: 0;
-}
-
-.google-btn {
-    width: 100%;
-    border-radius: 12px !important;
-    background: white !important;
-    border: 1px solid #e2e8f0 !important;
-    color: #334155 !important;
-    font-weight: 600 !important;
-    transition: all 0.2s ease !important;
-}
-.google-btn:hover {
-    background: #f8fafc !important;
-    border-color: #cbd5e1 !important;
-    transform: translateY(-1px);
-}
-/* pastikan tidak override style utama lainnya */
-
-/* Responsive */
-@media (max-width: 960px) {
-    .login-card {
-        flex-direction: column;
-        min-height: auto;
-        max-width: 500px;
-        margin: 0 auto;
-    }
-
-    .login-visual {
-        padding: 3rem 2rem;
-    }
-
-    .login-form-wrapper {
-        padding: 2.5rem 2rem;
-    }
-
-    .feature-pills {
-        display: none;
-    }
-}
-
-@media (max-width: 480px) {
-    .login-container {
-        padding: 1rem;
-    }
-
-    .login-visual {
-        padding: 2rem 1.5rem;
-    }
-
-    .app-logo {
-        width: 100px;
-    }
-
-    .region-name {
-        font-size: 1.5rem;
-    }
-}
-</style>

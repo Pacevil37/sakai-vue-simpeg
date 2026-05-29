@@ -21,24 +21,34 @@ const router = createRouter({
         {
             path: '/auth/access',
             name: 'accessDenied',
-            component: () => import('@/views/pages/auth/Access.vue')
+            component: () => import('@/views/pages/auth/Access.vue'),
+            meta: { requiresAuth: false }
         },
         {
             path: '/auth/error',
             name: 'error',
-            component: () => import('@/views/pages/auth/Error.vue')
+            component: () => import('@/views/pages/auth/Error.vue'),
+            meta: { requiresAuth: false }
+        },
+
+        // ==================== LANDING PAGE ====================
+        {
+            path: '/landing',
+            name: 'landing',
+            component: () => import('@/pages/landing/landing.vue'),
+            meta: { requiresGuest: true }
         },
 
         // ==================== ROUTE UTAMA (DENGAN LAYOUT) ====================
         {
             path: '/',
             component: AppLayout,
-            meta: { requiresAuth: true },
             children: [
                 {
                     path: '',
                     name: 'dashboard',
-                    component: () => import('@/views/Dashboard.vue')
+                    component: () => import('@/views/Dashboard.vue'),
+                    meta: { requiresAuth: true }
                 },
 
                 // ---------- Manajemen Pegawai ----------
@@ -79,7 +89,7 @@ const router = createRouter({
                     meta: { requiresGuest: true }
                 },
 
-                // ---------- Riwayat Pegawai (untuk pegawai sendiri) ----------
+                // ---------- Riwayat Pegawai ----------
                 {
                     path: '/pegawai/riwayat-pendidikan',
                     name: 'pegawai-riwayat-pendidikan',
@@ -211,16 +221,12 @@ const router = createRouter({
             ]
         },
 
-        // ==================== ROUTE TAMBAHAN (tanpa layout) ====================
-        {
-            path: '/landing',
-            name: 'landing',
-            component: () => import('@/views/pages/Landing.vue')
-        },
+        // ==================== ROUTE TAMBAHAN ====================
         {
             path: '/pages/notfound',
             name: 'notfound',
-            component: () => import('@/views/pages/NotFound.vue')
+            component: () => import('@/views/pages/NotFound.vue'),
+            meta: { requiresAuth: false }
         },
 
         // Redirect 404
@@ -235,31 +241,44 @@ const router = createRouter({
 router.beforeEach(async (to, from, next) => {
     const authStore = useAuthStore();
 
-    // Pastikan store sudah diinisialisasi (dipanggil di main.js)
+    // Inisialisasi auth jika belum
     if (!authStore.isInitialized) {
         await authStore.init();
     }
 
+    const isAuthenticated = authStore.isAuthenticated;
+
+    // Evaluasi Root '/' secara aman untuk menghindari putaran navigasi tanpa henti
+    if (to.path === '/') {
+        if (isAuthenticated) {
+            return to.name === 'dashboard' ? next() : next({ name: 'dashboard' });
+        } else {
+            return to.name === 'landing' ? next() : next({ name: 'landing' });
+        }
+    }
+
+    // Jika route memerlukan autentikasi
     if (to.meta.requiresAuth) {
-        if (!authStore.isAuthenticated) {
-            next({ name: 'login', query: { redirect: to.fullPath } });
-            return;
+        if (!isAuthenticated) {
+            // Jika belum login, tendang ke landing page
+            return next({ name: 'landing', query: { redirect: to.fullPath } });
         }
 
+        // Pengecekan Hak Akses Berbasis Peran (Role-based Access Control)
         if (to.meta.roles && to.meta.roles.length > 0) {
             const userRole = authStore.userRole;
             if (!to.meta.roles.includes(userRole)) {
-                next({ name: 'accessDenied' });
-                return;
+                return next({ name: 'accessDenied' });
             }
         }
     }
 
-    if (to.meta.requiresGuest && authStore.isAuthenticated) {
-        next({ name: 'dashboard' });
-        return;
+    // Jika pengguna sudah login, kunci akses ke halaman ber-meta 'requiresGuest' (login/landing)
+    if (to.meta.requiresGuest && isAuthenticated) {
+        return next({ name: 'dashboard' });
     }
 
+    // Izinkan jalannya rute jika semua syarat terpenuhi
     next();
 });
 
