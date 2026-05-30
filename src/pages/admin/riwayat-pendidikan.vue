@@ -1,237 +1,9 @@
-<template>
-  <div class="riwayat-pendidikan-page">
-    <!-- Header -->
-    <div class="riwayat-header">
-      <div class="riwayat-header-content">
-        <div class="riwayat-header-icon">
-          <i class="pi pi-graduation-cap"></i>
-        </div>
-        <div>
-          <h1 class="riwayat-title">Riwayat Pendidikan</h1>
-          <p class="riwayat-subtitle">Kelola riwayat pendidikan pegawai</p>
-        </div>
-      </div>
-      <div class="riwayat-header-actions">
-        <InputGroup class="search-input">
-          <InputGroupAddon>
-            <i class="pi pi-search"></i>
-          </InputGroupAddon>
-          <InputText v-model="searchQuery" placeholder="Cari NIP atau nama..." />
-        </InputGroup>
-        <Button icon="pi pi-refresh" severity="secondary" @click="loadData" :loading="loading" />
-        <Button label="Tambah Riwayat" icon="pi pi-plus" @click="openCreateModal" class="btn-primary" />
-      </div>
-    </div>
-
-    <!-- Filter tambahan (jenjang & tahun) -->
-    <div class="riwayat-filters">
-      <div class="filter-item">
-        <label>Jenjang</label>
-        <Select v-model="filterJenjang" :options="jenjangOptions" optionLabel="label" optionValue="value" placeholder="Semua jenjang" clearable />
-      </div>
-      <div class="filter-item">
-        <label>Tahun Lulus</label>
-        <InputNumber v-model="filterTahun" placeholder="Tahun" :min="1900" :max="2100" />
-      </div>
-      <div class="filter-item">
-        <Button label="Terapkan Filter" icon="pi pi-filter" @click="applyFilters" />
-        <Button label="Reset" icon="pi pi-times" severity="secondary" outlined @click="resetFilters" />
-      </div>
-    </div>
-
-    <!-- Statistik -->
-    <div class="stats-grid">
-      <div class="stat-card bg-blue-50">
-        <div class="stat-icon">
-          <i class="pi pi-book"></i>
-        </div>
-        <div class="stat-info">
-          <span class="stat-label">Total Riwayat</span>
-          <span class="stat-value">{{ stats.total }}</span>
-        </div>
-      </div>
-      <div class="stat-card bg-green-50">
-        <div class="stat-icon">
-          <i class="pi pi-graduation-cap"></i>
-        </div>
-        <div class="stat-info">
-          <span class="stat-label">Sarjana (S1/S2/S3)</span>
-          <span class="stat-value">{{ stats.sarjana }}</span>
-        </div>
-      </div>
-      <div class="stat-card bg-orange-50">
-        <div class="stat-icon">
-          <i class="pi pi-certificate"></i>
-        </div>
-        <div class="stat-info">
-          <span class="stat-label">Diploma (D1-D4)</span>
-          <span class="stat-value">{{ stats.diploma }}</span>
-        </div>
-      </div>
-      <div class="stat-card bg-purple-50">
-        <div class="stat-icon">
-          <i class="pi pi-school"></i>
-        </div>
-        <div class="stat-info">
-          <span class="stat-label">SMA/SMK/Sederajat</span>
-          <span class="stat-value">{{ stats.sma }}</span>
-        </div>
-      </div>
-    </div>
-
-    <!-- Data Table -->
-    <div class="riwayat-table-wrap">
-      <DataTable
-        :value="items"
-        :loading="loading"
-        paginator
-        :rows="10"
-        :rowsPerPageOptions="[10, 25, 50]"
-        paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
-        currentPageReportTemplate="Menampilkan {first} sampai {last} dari {totalRecords} riwayat"
-        class="riwayat-datatable"
-      >
-        <Column field="pegawai.nip" header="NIP" sortable>
-          <template #body="{ data }">
-            <span class="font-mono">{{ data.pegawai?.nip || '-' }}</span>
-          </template>
-        </Column>
-        <Column field="pegawai.nama" header="Nama Pegawai" sortable>
-          <template #body="{ data }">
-            <span class="font-semibold">{{ data.pegawai?.nama || '-' }}</span>
-          </template>
-        </Column>
-        <Column field="jenjang" header="Jenjang" sortable />
-        <Column field="institusi" header="Institusi" />
-        <Column field="tahun_lulus" header="Tahun Lulus" sortable />
-        <Column header="Aksi" :exportable="false" style="min-width: 8rem">
-          <template #body="{ data }">
-            <div class="flex gap-2">
-              <Button icon="pi pi-eye" severity="info" size="small" @click="viewDetail(data)" v-tooltip.top="'Lihat'" />
-              <Button icon="pi pi-pencil" severity="warning" size="small" @click="openEditModal(data)" v-tooltip.top="'Edit'" />
-              <Button icon="pi pi-trash" severity="danger" size="small" @click="confirmDelete(data)" v-tooltip.top="'Hapus'" />
-            </div>
-          </template>
-        </Column>
-        <template #empty>
-          <div class="text-center py-4">Belum ada data riwayat pendidikan. Klik "Tambah Riwayat".</div>
-        </template>
-      </DataTable>
-    </div>
-
-    <!-- Dialog Form Tambah/Edit -->
-    <Dialog
-      v-model:visible="showDialog"
-      :header="isEditing ? 'Edit Riwayat Pendidikan' : 'Tambah Riwayat Pendidikan'"
-      :style="{ width: '500px' }"
-      modal
-    >
-      <div class="field">
-        <label>Pegawai <span class="text-red-500">*</span></label>
-        <Select
-          v-model="form.pegawai_id"
-          :options="pegawaiOptions"
-          optionLabel="label"
-          optionValue="value"
-          placeholder="Pilih pegawai"
-          :class="{ 'p-invalid': errors.pegawai_id }"
-          filter
-          showClear
-        />
-        <small v-if="errors.pegawai_id" class="p-error">{{ errors.pegawai_id }}</small>
-      </div>
-      <div class="field">
-        <label>Jenjang <span class="text-red-500">*</span></label>
-        <Select
-          v-model="form.jenjang"
-          :options="jenjangOptions"
-          optionLabel="label"
-          optionValue="value"
-          placeholder="Pilih jenjang"
-          :class="{ 'p-invalid': errors.jenjang }"
-        />
-        <small v-if="errors.jenjang" class="p-error">{{ errors.jenjang }}</small>
-      </div>
-      <div class="field">
-        <label>Institusi</label>
-        <InputText v-model="form.institusi" placeholder="Nama institusi/universitas" />
-      </div>
-      <div class="field">
-        <label>Tahun Lulus</label>
-        <InputNumber v-model="form.tahun_lulus" :min="1900" :max="2100" placeholder="Tahun lulus" />
-      </div>
-      <div class="field">
-        <label>File Ijazah (opsional)</label>
-        <InputText v-model="form.ijazah_file" placeholder="URL file ijazah" />
-      </div>
-      <template #footer>
-        <Button label="Batal" severity="secondary" outlined @click="closeDialog" />
-        <Button label="Simpan" @click="saveData" :loading="submitting" />
-      </template>
-    </Dialog>
-
-    <!-- Dialog Detail -->
-    <Dialog
-      v-model:visible="showDetailDialog"
-      header="Detail Riwayat Pendidikan"
-      :style="{ width: '450px' }"
-      modal
-    >
-      <div class="detail-item">
-        <span class="detail-label">NIP:</span>
-        <span class="detail-value">{{ detailData?.pegawai?.nip || '-' }}</span>
-      </div>
-      <div class="detail-item">
-        <span class="detail-label">Nama Pegawai:</span>
-        <span class="detail-value">{{ detailData?.pegawai?.nama || '-' }}</span>
-      </div>
-      <div class="detail-item">
-        <span class="detail-label">Jenjang:</span>
-        <span class="detail-value">{{ detailData?.jenjang || '-' }}</span>
-      </div>
-      <div class="detail-item">
-        <span class="detail-label">Institusi:</span>
-        <span class="detail-value">{{ detailData?.institusi || '-' }}</span>
-      </div>
-      <div class="detail-item">
-        <span class="detail-label">Tahun Lulus:</span>
-        <span class="detail-value">{{ detailData?.tahun_lulus || '-' }}</span>
-      </div>
-      <div class="detail-item">
-        <span class="detail-label">File Ijazah:</span>
-        <span class="detail-value">
-          <a v-if="detailData?.ijazah_file" :href="detailData.ijazah_file" target="_blank">Lihat file</a>
-          <span v-else>-</span>
-        </span>
-      </div>
-      <template #footer>
-        <Button label="Tutup" @click="showDetailDialog = false" />
-      </template>
-    </Dialog>
-
-    <!-- Konfirmasi Hapus -->
-    <Dialog
-      v-model:visible="deleteDialog"
-      header="Konfirmasi Hapus"
-      :style="{ width: '400px' }"
-      modal
-    >
-      <div class="flex align-items-center gap-3">
-        <i class="pi pi-exclamation-triangle text-3xl text-warning"></i>
-        <span>Yakin ingin menghapus riwayat pendidikan <strong>{{ selectedItem?.pegawai?.nama }}</strong>?</span>
-      </div>
-      <template #footer>
-        <Button label="Batal" severity="secondary" outlined @click="deleteDialog = false" />
-        <Button label="Hapus" severity="danger" @click="deleteData" :loading="deleting" />
-      </template>
-    </Dialog>
-  </div>
-</template>
-
 <script setup>
 import { ref, onMounted, computed } from 'vue';
 import { useToast } from 'primevue/usetoast';
 import { supabase } from '@/lib/supabase';
+
+// PrimeVue 4 Components
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
 import InputText from 'primevue/inputtext';
@@ -244,7 +16,7 @@ import InputGroupAddon from 'primevue/inputgroupaddon';
 
 const toast = useToast();
 
-// State
+// ==================== CORE STATE ====================
 const items = ref([]);
 const loading = ref(false);
 const submitting = ref(false);
@@ -255,433 +27,304 @@ const deleteDialog = ref(false);
 const isEditing = ref(false);
 const selectedItem = ref(null);
 const detailData = ref(null);
+
 const form = ref({
-  pegawai_id: null,
-  jenjang: null,
-  institusi: '',
-  tahun_lulus: null,
-  ijazah_file: ''
+    pegawai_id: null,
+    jenjang: null,
+    institusi: '',
+    tahun_lulus: null,
+    ijazah_file: ''
 });
 const errors = ref({});
 
-// Filter
+// Filters
 const searchQuery = ref('');
 const filterJenjang = ref(null);
 const filterTahun = ref(null);
 const pegawaiOptions = ref([]);
 
-// Options
 const jenjangOptions = [
-  { label: 'SD', value: 'SD' },
-  { label: 'SMP', value: 'SMP' },
-  { label: 'SMA', value: 'SMA' },
-  { label: 'SMK', value: 'SMK' },
-  { label: 'D1', value: 'D1' },
-  { label: 'D2', value: 'D2' },
-  { label: 'D3', value: 'D3' },
-  { label: 'D4', value: 'D4' },
-  { label: 'S1', value: 'S1' },
-  { label: 'S2', value: 'S2' },
-  { label: 'S3', value: 'S3' }
+    { label: 'SD', value: 'SD' }, { label: 'SMP', value: 'SMP' },
+    { label: 'SMA', value: 'SMA' }, { label: 'SMK', value: 'SMK' },
+    { label: 'D1', value: 'D1' }, { label: 'D2', value: 'D2' },
+    { label: 'D3', value: 'D3' }, { label: 'D4', value: 'D4' },
+    { label: 'S1', value: 'S1' }, { label: 'S2', value: 'S2' },
+    { label: 'S3', value: 'S3' }
 ];
 
-// Statistik (computed)
+// ==================== DESIGN SYSTEM PT ====================
+const tablePassthrough = {
+    root: { class: 'border border-zinc-200 dark:border-zinc-800 rounded-xl overflow-hidden shadow-sm bg-white dark:bg-zinc-950' },
+    thead: { class: 'bg-zinc-50 dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800' },
+    headerCell: { class: 'p-4 text-[10px] font-bold text-zinc-400 dark:text-zinc-500 uppercase tracking-widest' },
+    bodyRow: { class: 'hover:bg-zinc-50/50 dark:hover:bg-zinc-900/40 transition-all border-b border-zinc-100 dark:border-zinc-900 last:border-0' },
+    rowCell: { class: 'p-4 text-xs font-medium text-zinc-700 dark:text-zinc-300' }
+};
+
+const dialogPT = {
+    root: { class: 'border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 rounded-2xl shadow-2xl overflow-hidden' },
+    header: { class: 'p-6 pb-2 bg-white dark:bg-zinc-950 flex items-center justify-between' },
+    title: { class: 'text-sm font-bold tracking-tight text-zinc-900 dark:text-zinc-100 uppercase' },
+    content: { class: 'p-6 pt-2 bg-white dark:bg-zinc-950' },
+    footer: { class: 'p-6 pt-0 bg-white dark:bg-zinc-950 flex justify-end gap-2' },
+    mask: { class: 'backdrop-blur-sm bg-zinc-900/40' }
+};
+
+// ==================== LOGIC & DATA FETCHING ====================
 const stats = computed(() => {
-  const total = items.value.length;
-  const sarjana = items.value.filter(i => ['S1', 'S2', 'S3'].includes(i.jenjang)).length;
-  const diploma = items.value.filter(i => i.jenjang?.startsWith('D')).length;
-  const sma = items.value.filter(i => ['SMA', 'SMK'].includes(i.jenjang)).length;
-  return { total, sarjana, diploma, sma };
+    const total = items.value.length;
+    const sarjana = items.value.filter(i => ['S1', 'S2', 'S3'].includes(i.jenjang)).length;
+    const diploma = items.value.filter(i => i.jenjang?.startsWith('D')).length;
+    const sma = items.value.filter(i => ['SMA', 'SMK'].includes(i.jenjang)).length;
+    return { total, sarjana, diploma, sma };
 });
 
-// Fetch data
 const loadPegawaiOptions = async () => {
-  const { data, error } = await supabase
-    .from('pegawai')
-    .select('id, nama, nip')
-    .order('nama');
-  if (!error) {
-    pegawaiOptions.value = data.map(p => ({
-      label: `${p.nip} - ${p.nama}`,
-      value: p.id
-    }));
-  }
+    const { data } = await supabase.from('pegawai').select('id, nama, nip').order('nama');
+    if (data) pegawaiOptions.value = data.map(p => ({ label: `${p.nip} - ${p.nama}`, value: p.id }));
 };
 
 const loadData = async () => {
-  loading.value = true;
-  try {
-    let query = supabase
-      .from('riwayat_pendidikan')
-      .select('*, pegawai(id, nip, nama)')
-      .order('created_at', { ascending: false });
+    loading.value = true;
+    try {
+        let query = supabase.from('riwayat_pendidikan').select('*, pegawai(id, nip, nama)').order('created_at', { ascending: false });
+        
+        if (filterJenjang.value) query = query.eq('jenjang', filterJenjang.value);
+        if (filterTahun.value) query = query.eq('tahun_lulus', filterTahun.value);
 
-    // Filter pencarian (NIP atau nama)
-    if (searchQuery.value) {
-      const searchTerm = `%${searchQuery.value}%`;
-      // Karena filter cross-table complex, kita filter di frontend setelah ambil data (atau bisa dengan join, tapi sederhana)
-      // Untuk efisiensi, kita ambil semua dulu lalu filter di frontend karena jumlah data tidak terlalu besar
+        const { data, error } = await query;
+        if (error) throw error;
+
+        let filtered = data || [];
+        if (searchQuery.value) {
+            const term = searchQuery.value.toLowerCase();
+            filtered = filtered.filter(item => 
+                item.pegawai?.nip?.toLowerCase().includes(term) || 
+                item.pegawai?.nama?.toLowerCase().includes(term)
+            );
+        }
+        items.value = filtered;
+    } catch (err) {
+        toast.add({ severity: 'error', summary: 'Gagal', detail: err.message, life: 3000 });
+    } finally {
+        loading.value = false;
     }
-    // Filter jenjang
-    if (filterJenjang.value) {
-      query = query.eq('jenjang', filterJenjang.value);
-    }
-    // Filter tahun lulus
-    if (filterTahun.value) {
-      query = query.eq('tahun_lulus', filterTahun.value);
-    }
-
-    const { data, error } = await query;
-    if (error) throw error;
-
-    let filtered = data || [];
-    // Filter pencarian (NIP atau nama) di frontend
-    if (searchQuery.value) {
-      const term = searchQuery.value.toLowerCase();
-      filtered = filtered.filter(item =>
-        item.pegawai?.nip?.toLowerCase().includes(term) ||
-        item.pegawai?.nama?.toLowerCase().includes(term)
-      );
-    }
-    items.value = filtered;
-  } catch (err) {
-    console.error(err);
-    toast.add({ severity: 'error', summary: 'Gagal', detail: err.message, life: 3000 });
-  } finally {
-    loading.value = false;
-  }
-};
-
-const applyFilters = () => {
-  loadData();
-};
-
-const resetFilters = () => {
-  searchQuery.value = '';
-  filterJenjang.value = null;
-  filterTahun.value = null;
-  loadData();
-};
-
-// CRUD
-const openCreateModal = () => {
-  isEditing.value = false;
-  form.value = { pegawai_id: null, jenjang: null, institusi: '', tahun_lulus: null, ijazah_file: '' };
-  errors.value = {};
-  showDialog.value = true;
-};
-
-const openEditModal = (row) => {
-  isEditing.value = true;
-  selectedItem.value = row;
-  form.value = {
-    pegawai_id: row.pegawai_id,
-    jenjang: row.jenjang,
-    institusi: row.institusi || '',
-    tahun_lulus: row.tahun_lulus,
-    ijazah_file: row.ijazah_file || ''
-  };
-  errors.value = {};
-  showDialog.value = true;
-};
-
-const viewDetail = (row) => {
-  detailData.value = row;
-  showDetailDialog.value = true;
-};
-
-const closeDialog = () => {
-  showDialog.value = false;
-  selectedItem.value = null;
 };
 
 const validate = () => {
-  errors.value = {};
-  if (!form.value.pegawai_id) errors.value.pegawai_id = 'Pegawai harus dipilih';
-  if (!form.value.jenjang) errors.value.jenjang = 'Jenjang harus dipilih';
-  return Object.keys(errors.value).length === 0;
+    errors.value = {};
+    if (!form.value.pegawai_id) errors.value.pegawai_id = 'Pilih personel terlebih dahulu.';
+    if (!form.value.jenjang) errors.value.jenjang = 'Jenjang pendidikan wajib diisi.';
+    return Object.keys(errors.value).length === 0;
 };
 
 const saveData = async () => {
-  if (!validate()) return;
-  submitting.value = true;
-  try {
-    const payload = {
-      pegawai_id: form.value.pegawai_id,
-      jenjang: form.value.jenjang,
-      institusi: form.value.institusi || null,
-      tahun_lulus: form.value.tahun_lulus || null,
-      ijazah_file: form.value.ijazah_file || null,
-      updated_at: new Date().toISOString()
-    };
-    if (isEditing.value && selectedItem.value) {
-      const { error } = await supabase
-        .from('riwayat_pendidikan')
-        .update(payload)
-        .eq('id', selectedItem.value.id);
-      if (error) throw error;
-      toast.add({ severity: 'success', summary: 'Berhasil', detail: 'Riwayat pendidikan diperbarui', life: 3000 });
-    } else {
-      const { error } = await supabase
-        .from('riwayat_pendidikan')
-        .insert([{ ...payload, created_at: new Date().toISOString() }]);
-      if (error) throw error;
-      toast.add({ severity: 'success', summary: 'Berhasil', detail: 'Riwayat pendidikan ditambahkan', life: 3000 });
+    if (!validate()) return;
+    submitting.value = true;
+    try {
+        const payload = { ...form.value, updated_at: new Date().toISOString() };
+        if (isEditing.value) {
+            await supabase.from('riwayat_pendidikan').update(payload).eq('id', selectedItem.value.id);
+        } else {
+            await supabase.from('riwayat_pendidikan').insert([{ ...payload, created_at: new Date().toISOString() }]);
+        }
+        toast.add({ severity: 'success', summary: 'Berhasil', detail: 'Ledger pendidikan diperbarui.', life: 3000 });
+        showDialog.value = false;
+        loadData();
+    } catch (err) {
+        toast.add({ severity: 'error', summary: 'Gagal', detail: err.message, life: 3000 });
+    } finally {
+        submitting.value = false;
     }
-    closeDialog();
-    await loadData();
-  } catch (err) {
-    toast.add({ severity: 'error', summary: 'Gagal', detail: err.message, life: 3000 });
-  } finally {
-    submitting.value = false;
-  }
 };
 
-const confirmDelete = (row) => {
-  selectedItem.value = row;
-  deleteDialog.value = true;
-};
-
+const confirmDelete = (row) => { selectedItem.value = row; deleteDialog.value = true; };
 const deleteData = async () => {
-  if (!selectedItem.value) return;
-  deleting.value = true;
-  try {
-    const { error } = await supabase
-      .from('riwayat_pendidikan')
-      .delete()
-      .eq('id', selectedItem.value.id);
-    if (error) throw error;
-    toast.add({ severity: 'success', summary: 'Berhasil', detail: 'Riwayat pendidikan dihapus', life: 3000 });
-    deleteDialog.value = false;
-    await loadData();
-  } catch (err) {
-    toast.add({ severity: 'error', summary: 'Gagal', detail: err.message, life: 3000 });
-  } finally {
-    deleting.value = false;
-    selectedItem.value = null;
-  }
+    deleting.value = true;
+    try {
+        await supabase.from('riwayat_pendidikan').delete().eq('id', selectedItem.value.id);
+        toast.add({ severity: 'success', summary: 'Terhapus', detail: 'Record pendidikan telah dimusnahkan.', life: 3000 });
+        deleteDialog.value = false;
+        loadData();
+    } finally { deleting.value = false; }
 };
 
-onMounted(async () => {
-  await loadPegawaiOptions();
-  await loadData();
-});
+const openCreateModal = () => {
+    isEditing.value = false;
+    form.value = { pegawai_id: null, jenjang: null, institusi: '', tahun_lulus: null, ijazah_file: '' };
+    errors.value = {};
+    showDialog.value = true;
+};
+
+const openEditModal = (row) => {
+    isEditing.value = true;
+    selectedItem.value = row;
+    form.value = { ...row };
+    showDialog.value = true;
+};
+
+onMounted(() => { loadPegawaiOptions(); loadData(); });
 </script>
 
+<template>
+    <div class="w-full max-w-[1400px] mx-auto p-6 md:p-10 flex flex-col gap-8 antialiased">
+        
+        <div class="bg-white dark:bg-zinc-900 p-8 rounded-2xl border border-zinc-200/60 dark:border-zinc-800/60 shadow-sm flex flex-col gap-8">
+            <div class="flex flex-col md:flex-row md:items-end justify-between gap-6">
+                <div class="flex items-start gap-5">
+                    <div class="w-14 h-14 rounded-2xl bg-zinc-950 dark:bg-white text-white dark:text-zinc-950 flex items-center justify-center shrink-0 shadow-xl shadow-zinc-500/10">
+                        <i class="pi pi-graduation-cap text-xl"></i>
+                    </div>
+                    <div>
+                        <div class="flex items-center gap-2 text-[10px] font-bold tracking-[0.2em] text-zinc-400 dark:text-zinc-500 uppercase mb-2">
+                            <span class="w-1.5 h-1.5 rounded-full bg-purple-500 animate-pulse"></span> Educational Asset Registry
+                        </div>
+                        <h1 class="text-2xl font-bold tracking-tight text-zinc-900 dark:text-white m-0">Riwayat Pendidikan</h1>
+                        <p class="text-xs text-zinc-400 dark:text-zinc-500 m-0 mt-2 max-w-2xl leading-relaxed font-medium">
+                            Manajemen record kualifikasi akademik personel untuk pemetaan kompetensi di dalam database repositori nasional.
+                        </p>
+                    </div>
+                </div>
+                <Button label="Registrasi Riwayat Baru" icon="pi pi-plus" class="text-xs font-bold bg-zinc-950 dark:bg-zinc-100 text-white dark:text-zinc-950 px-8 py-3 rounded-xl border-0 shadow-lg uppercase tracking-tighter" @click="openCreateModal" />
+            </div>
+
+            <div class="h-[1px] w-full bg-zinc-100 dark:bg-zinc-800/50"></div>
+
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div class="flex flex-col gap-2">
+                    <label class="text-[10px] font-bold text-zinc-400 uppercase tracking-widest px-1">Pencarian Cepat</label>
+                    <InputGroup class="group">
+                        <InputGroupAddon class="bg-zinc-50 dark:bg-zinc-950 border-zinc-200 dark:border-zinc-800"><i class="pi pi-search text-[10px]"></i></InputGroupAddon>
+                        <InputText v-model="searchQuery" placeholder="NIP / Nama..." class="text-xs p-2.5 border-zinc-200 dark:border-zinc-800 bg-zinc-50/50" />
+                    </InputGroup>
+                </div>
+                <div class="flex flex-col gap-2">
+                    <label class="text-[10px] font-bold text-zinc-400 uppercase tracking-widest px-1">Jenjang</label>
+                    <Select v-model="filterJenjang" :options="jenjangOptions" optionLabel="label" optionValue="value" placeholder="Semua Jenjang" class="text-xs border-zinc-200 dark:border-zinc-800" />
+                </div>
+                <div class="flex flex-col gap-2">
+                    <label class="text-[10px] font-bold text-zinc-400 uppercase tracking-widest px-1">Tahun Lulus</label>
+                    <InputNumber v-model="filterTahun" :useGrouping="false" placeholder="Tahun" class="w-full text-xs" />
+                </div>
+                <div class="flex items-end gap-2">
+                    <Button icon="pi pi-filter" label="Terapkan" class="flex-1 text-xs font-bold bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 border-0 py-2.5 rounded-lg" @click="loadData" />
+                    <Button icon="pi pi-refresh" class="bg-zinc-100 dark:bg-zinc-800 text-zinc-600 border-0 p-2.5 rounded-lg" @click="resetFilters" />
+                </div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div v-for="(val, key) in stats" :key="key" class="bg-white dark:bg-zinc-900 p-5 rounded-2xl border border-zinc-200/60 dark:border-zinc-800/60 shadow-sm flex items-center gap-4">
+                <div class="w-10 h-10 rounded-xl bg-zinc-50 dark:bg-zinc-950 flex items-center justify-center border border-zinc-100 dark:border-zinc-800">
+                    <i :class="['pi text-zinc-400', key === 'sarjana' ? 'pi-graduation-cap' : key === 'total' ? 'pi-book' : 'pi-certificate']"></i>
+                </div>
+                <div>
+                    <p class="text-[10px] font-bold text-zinc-400 uppercase tracking-widest m-0">{{ key }}</p>
+                    <p class="text-xl font-black text-zinc-900 dark:text-white m-0 tracking-tight">{{ val }} <span class="text-[10px] text-zinc-400 font-medium">Record</span></p>
+                </div>
+            </div>
+        </div>
+
+        <div class="flex flex-col gap-4">
+            <div class="flex items-center gap-2 px-1">
+                <i class="pi pi-database text-[10px] text-zinc-400"></i>
+                <span class="text-[10px] font-bold uppercase tracking-widest text-zinc-400">Arsip Pendidikan Terverifikasi</span>
+            </div>
+            
+            <DataTable :value="items" :loading="loading" :pt="tablePassthrough" paginator :rows="10" scrollable scrollHeight="50vh">
+                <template #empty>
+                    <div class="py-24 text-center flex flex-col items-center justify-center gap-4">
+                        <i class="pi pi-search text-3xl text-zinc-200"></i>
+                        <p class="text-xs text-zinc-400 font-medium tracking-tight">Tidak ditemukan record kualifikasi akademik.</p>
+                    </div>
+                </template>
+                
+                <Column field="pegawai.nip" header="Identitas Personel" class="min-w-[250px]">
+                    <template #body="{ data }">
+                        <div class="flex flex-col gap-0.5">
+                            <span class="font-bold text-zinc-900 dark:text-zinc-100 tracking-tight text-sm">{{ data.pegawai?.nama }}</span>
+                            <span class="text-[10px] font-mono text-zinc-400 tracking-tighter">{{ data.pegawai?.nip }}</span>
+                        </div>
+                    </template>
+                </Column>
+                
+                <Column field="jenjang" header="Jenjang" class="w-[100px]">
+                    <template #body="{ data }">
+                        <span class="px-2 py-1 rounded bg-zinc-100 dark:bg-zinc-800 text-[10px] font-black text-zinc-600 dark:text-zinc-300 border border-zinc-200 dark:border-zinc-700 uppercase">{{ data.jenjang }}</span>
+                    </template>
+                </Column>
+                
+                <Column field="institusi" header="Lembaga Pendidikan" class="min-w-[250px]" />
+                <Column field="tahun_lulus" header="Tahun Lulus" class="w-[120px]" headerClass="text-center" bodyClass="text-center font-bold" />
+                
+                <Column header="Opsi" class="w-[140px]" bodyClass="text-center">
+                    <template #body="{ data }">
+                        <div class="flex items-center justify-center gap-1">
+                            <Button icon="pi pi-pencil" text rounded size="small" class="text-zinc-400 hover:text-zinc-900 dark:hover:text-white" @click="openEditModal(data)" />
+                            <Button icon="pi pi-trash" text rounded severity="danger" size="small" class="text-zinc-400 hover:text-red-500" @click="confirmDelete(data)" />
+                        </div>
+                    </template>
+                </Column>
+            </DataTable>
+        </div>
+
+        <Dialog v-model:visible="showDialog" :header="isEditing ? 'Modify Academic Record' : 'Registrasi Pendidikan Baru'" :pt="dialogPT" modal :style="{ width: '500px' }">
+            <div class="flex flex-col gap-5 py-6">
+                <div class="flex flex-col gap-2">
+                    <label class="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Pilih Personel <span class="text-red-500">*</span></label>
+                    <Select v-model="form.pegawai_id" :options="pegawaiOptions" optionLabel="label" optionValue="value" filter placeholder="Cari NIP atau Nama..." class="w-full text-xs border-zinc-200 bg-zinc-50/50" />
+                    <small v-if="errors.pegawai_id" class="text-[9px] text-red-500 font-bold uppercase tracking-tighter">{{ errors.pegawai_id }}</small>
+                </div>
+                
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="flex flex-col gap-2">
+                        <label class="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Jenjang <span class="text-red-500">*</span></label>
+                        <Select v-model="form.jenjang" :options="jenjangOptions" optionLabel="label" optionValue="value" class="text-xs border-zinc-200" />
+                    </div>
+                    <div class="flex flex-col gap-2">
+                        <label class="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Tahun Lulus</label>
+                        <InputNumber v-model="form.tahun_lulus" :useGrouping="false" class="text-xs w-full" />
+                    </div>
+                </div>
+
+                <div class="flex flex-col gap-2">
+                    <label class="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Institusi / Universitas</label>
+                    <InputText v-model="form.institusi" placeholder="Nama lembaga resmi..." class="w-full text-xs p-3 border-zinc-200" />
+                </div>
+
+                <div class="flex flex-col gap-2">
+                    <label class="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Dokumen Digital (Ijazah)</label>
+                    <InputText v-model="form.ijazah_file" placeholder="Cloud Storage URL..." class="w-full text-[11px] font-mono p-3 border-zinc-200 bg-zinc-50" />
+                </div>
+            </div>
+            <template #footer>
+                <div class="flex items-center justify-end gap-3 w-full border-t border-zinc-100 pt-6">
+                    <Button label="Batalkan" class="text-xs font-bold text-zinc-400 bg-transparent border-0" @click="showDialog = false" />
+                    <Button label="Finalisasi Record" class="text-xs font-bold bg-zinc-950 text-white px-8 py-3 rounded-xl border-0 shadow-lg" :loading="submitting" @click="saveData" />
+                </div>
+            </template>
+        </Dialog>
+
+        <Dialog v-model:visible="deleteDialog" header="Otorisasi Penghapusan" :pt="dialogPT" modal :style="{ width: '380px' }">
+            <div class="py-6 flex flex-col items-center text-center gap-4">
+                <div class="w-14 h-14 rounded-full bg-red-50 flex items-center justify-center border border-red-100">
+                    <i class="pi pi-shield-exclamation text-xl text-red-500"></i>
+                </div>
+                <p class="text-[11px] font-medium text-zinc-500 leading-relaxed px-4 italic text-pretty">
+                    Record pendidikan milik <strong>{{ selectedItem?.pegawai?.nama }}</strong> akan dihapus secara permanen.
+                </p>
+            </div>
+            <template #footer>
+                <div class="flex flex-col gap-2 w-full pt-4">
+                    <Button label="Ya, Konfirmasi Hapus" class="w-full text-[10px] font-black bg-red-500 text-white border-0 py-3 rounded-xl" :loading="deleting" @click="deleteData" />
+                    <Button label="Batalkan" class="w-full text-[10px] font-bold text-zinc-400 bg-transparent border-0 py-2" @click="deleteDialog = false" />
+                </div>
+            </template>
+        </Dialog>
+
+    </div>
+</template>
+
 <style scoped>
-.riwayat-pendidikan-page {
-  min-height: 100vh;
-  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
-  padding: 1.5rem 0;
-}
-
-.riwayat-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 1rem;
-  background: white;
-  border-radius: 1rem;
-  padding: 1.25rem 1.5rem;
-  margin-bottom: 1.5rem;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
-  border: 1px solid #e2e8f0;
-}
-
-.riwayat-header-content {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-}
-
-.riwayat-header-icon {
-  width: 3rem;
-  height: 3rem;
-  border-radius: 0.75rem;
-  background: linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%);
-  color: white;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1.5rem;
-}
-
-.riwayat-title {
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: #0f172a;
-  margin: 0;
-}
-
-.riwayat-subtitle {
-  font-size: 0.875rem;
-  color: #64748b;
-  margin: 0.25rem 0 0;
-}
-
-.riwayat-header-actions {
-  display: flex;
-  gap: 0.5rem;
-  align-items: center;
-  flex-wrap: wrap;
-}
-
-.search-input {
-  min-width: 250px;
-}
-
-.btn-primary {
-  font-weight: 600;
-}
-
-.riwayat-filters {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 1rem;
-  background: white;
-  border-radius: 1rem;
-  padding: 1rem 1.5rem;
-  margin-bottom: 1.5rem;
-  border: 1px solid #e2e8f0;
-  align-items: flex-end;
-}
-
-.filter-item {
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-}
-
-.filter-item label {
-  font-size: 0.75rem;
-  font-weight: 600;
-  color: #475569;
-}
-
-.stats-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 1rem;
-  margin-bottom: 1.5rem;
-}
-
-.stat-card {
-  background: white;
-  border-radius: 0.75rem;
-  padding: 1rem;
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-  border: 1px solid #e2e8f0;
-}
-
-.stat-icon {
-  width: 3rem;
-  height: 3rem;
-  border-radius: 0.75rem;
-  background: rgba(59,130,246,0.1);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1.5rem;
-}
-
-.stat-info {
-  flex: 1;
-}
-
-.stat-label {
-  font-size: 0.75rem;
-  font-weight: 500;
-  color: #475569;
-  display: block;
-}
-
-.stat-value {
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: #0f172a;
-}
-
-.riwayat-table-wrap {
-  background: white;
-  border-radius: 1rem;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
-  border: 1px solid #e2e8f0;
-  overflow: hidden;
-  padding: 1rem;
-}
-
-.riwayat-datatable {
-  width: 100%;
-}
-
-.riwayat-datatable :deep(.p-datatable-thead > tr > th) {
-  background: #f8fafc;
-  font-weight: 600;
-  font-size: 0.8125rem;
-  padding: 0.75rem 1rem;
-}
-
-.riwayat-datatable :deep(.p-datatable-tbody > tr > td) {
-  padding: 0.75rem 1rem;
-}
-
-.riwayat-datatable :deep(.p-datatable-tbody > tr:hover) {
-  background: #f8fafc;
-}
-
-.field {
-  margin-bottom: 1.25rem;
-}
-
-.field label {
-  display: block;
-  font-weight: 600;
-  font-size: 0.85rem;
-  margin-bottom: 0.5rem;
-  color: #334155;
-}
-
-.p-error {
-  color: #ef4444;
-  font-size: 0.75rem;
-  display: block;
-  margin-top: 0.25rem;
-}
-
-.detail-item {
-  display: flex;
-  margin-bottom: 0.75rem;
-}
-
-.detail-label {
-  width: 120px;
-  font-weight: 600;
-  color: #475569;
-}
-
-.detail-value {
-  flex: 1;
-  color: #0f172a;
-}
-
-@media (max-width: 640px) {
-  .riwayat-pendidikan-page {
-    padding: 1rem;
-  }
-  .riwayat-header {
-    flex-direction: column;
-    align-items: stretch;
-  }
-  .search-input {
-    width: 100%;
-  }
-  .riwayat-filters {
-    flex-direction: column;
-    align-items: stretch;
-  }
-}
+/* SEMUA STYLE LAMA DIHAPUS - SEKARANG MURNI TAILWIND */
 </style>

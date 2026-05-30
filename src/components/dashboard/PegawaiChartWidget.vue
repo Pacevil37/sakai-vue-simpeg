@@ -4,51 +4,55 @@ import { useToast } from 'primevue/usetoast';
 import { supabase } from '@/lib/supabase';
 import Chart from 'primevue/chart';
 import Button from 'primevue/button';
+import Skeleton from 'primevue/skeleton';
 
 const toast = useToast();
 const chartData = ref(null);
-const loading = ref(false);
+const isLoading = ref(false);
 
+// Konfigurasi Chart Options untuk Horizontal Style Kelas Dunia
 const chartOptions = computed(() => {
-    const documentStyle = getComputedStyle(document.documentElement);
-    const textColor = documentStyle.getPropertyValue('--text-color');
-    const textColorSecondary = documentStyle.getPropertyValue('--text-color-secondary');
-    const surfaceBorder = documentStyle.getPropertyValue('--surface-border');
-
+    const isDarkMode = document.documentElement.classList.contains('dark');
+    
     return {
+        indexAxis: 'y', // KUNCI UTAMA: Mengubah orientasi menjadi Horizontal
         plugins: {
             legend: {
-                labels: {
-                    color: textColor,
-                    font: { weight: 600 }
-                }
+                display: false
             },
             tooltip: {
                 mode: 'index',
                 intersect: false,
-                backgroundColor: 'var(--surface-overlay)',
-                titleFont: { weight: 600 },
-                padding: 12
+                backgroundColor: isDarkMode ? '#1e293b' : '#ffffff',
+                titleColor: isDarkMode ? '#ffffff' : '#0f172a',
+                bodyColor: isDarkMode ? '#cbd5e1' : '#334155',
+                borderColor: isDarkMode ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)',
+                borderWidth: 1,
+                padding: 12,
+                boxPadding: 6,
+                titleFont: { size: 13, weight: 700 },
+                bodyFont: { size: 12, weight: 500 }
             }
         },
         scales: {
             x: {
                 ticks: {
-                    color: textColorSecondary,
-                    font: { size: 12, weight: 500 }
+                    color: isDarkMode ? '#94a3b8' : '#64748b',
+                    font: { size: 11 },
+                    stepSize: 1
                 },
                 grid: {
-                    display: false,
+                    color: isDarkMode ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)',
                     drawBorder: false
                 }
             },
             y: {
                 ticks: {
-                    color: textColorSecondary,
-                    font: { size: 12 }
+                    color: isDarkMode ? '#cbd5e1' : '#1e293b', // Warna label golongan lebih kontras
+                    font: { size: 12, weight: 700 }, // Font dipertegas agar mudah dibaca di kiri
                 },
                 grid: {
-                    color: surfaceBorder,
+                    display: false, // Hilangkan garis vertikal agar clean
                     drawBorder: false
                 }
             }
@@ -59,9 +63,8 @@ const chartOptions = computed(() => {
 });
 
 const loadChartData = async () => {
-    loading.value = true;
+    isLoading.value = true;
     try {
-        // Ambil data golongan dari tabel pegawai
         const { data, error } = await supabase
             .from('pegawai')
             .select('golongan');
@@ -69,16 +72,14 @@ const loadChartData = async () => {
         if (error) throw error;
 
         if (data && data.length > 0) {
-            // Hitung frekuensi tiap golongan
             const counts = {};
             data.forEach(peg => {
-                const gol = peg.golongan || 'Tidak Diketahui';
+                const gol = peg.golongan || 'N/A';
                 counts[gol] = (counts[gol] || 0) + 1;
             });
 
-            // Urutkan golongan secara descending (IV/a, III/d, dst.) atau sesuai kebutuhan
+            // Urutkan Golongan dari Tingkat Tertinggi ke Terendah
             const sortedLabels = Object.keys(counts).sort((a, b) => {
-                // Urutkan berdasarkan angka romawi dan huruf
                 const aVal = a.replace(/[^IVX]/gi, '');
                 const bVal = b.replace(/[^IVX]/gi, '');
                 if (aVal !== bVal) return bVal.length - aVal.length;
@@ -86,43 +87,46 @@ const loadChartData = async () => {
             });
             const sortedData = sortedLabels.map(label => counts[label]);
 
-            const documentStyle = getComputedStyle(document.documentElement);
-            const primaryColor = documentStyle.getPropertyValue('--primary-500') || '#0d5c2e';
-
+            // Membuat Efek Gradasi Horizontal Menggunakan Canvas Context
             chartData.value = {
                 labels: sortedLabels,
                 datasets: [
                     {
-                        label: 'Jumlah Pegawai',
-                        backgroundColor: primaryColor,
-                        borderColor: primaryColor,
+                        label: 'Jumlah Aparatur',
+                        // Menggunakan fungsi callback untuk render gradasi CSS murni ke Chart.js
+                        backgroundColor: (context) => {
+                            const chart = context.chart;
+                            const { ctx, chartArea } = chart;
+                            if (!chartArea) return null;
+                            
+                            // Buat gradasi linear dari kiri ke kanan (X0 ke X1)
+                            const gradient = ctx.createLinearGradient(chartArea.left, 0, chartArea.right, 0);
+                            gradient.addColorStop(0, '#10b981'); // Emerald 500 (Kiri)
+                            gradient.addColorStop(1, '#06b6d4'); // Teal/Cyan 500 (Kanan)
+                            return gradient;
+                        },
+                        hoverBackgroundColor: '#059669',
                         data: sortedData,
-                        borderRadius: 8,
-                        borderSkipped: false
+                        borderRadius: 20, // Rounded kapsul penuh yang super modern
+                        borderSkipped: false,
+                        maxBarThickness: 16 // Batang dibuat ramping dan elegan
                     }
                 ]
             };
         } else {
-            // Data kosong, tampilkan placeholder
             chartData.value = null;
-            toast.add({
-                severity: 'info',
-                summary: 'Info',
-                detail: 'Belum ada data pegawai untuk ditampilkan.',
-                life: 3000
-            });
         }
     } catch (error) {
         console.error('Error loading chart data:', error);
         toast.add({
             severity: 'error',
-            summary: 'Gagal Memuat Grafik',
-            detail: error.message || 'Terjadi kesalahan saat mengambil data.',
+            summary: 'Gagal Sinkronisasi Grafik',
+            detail: error.message || 'Terjadi gangguan jaringan database.',
             life: 4000
         });
         chartData.value = null;
     } finally {
-        loading.value = false;
+        isLoading.value = false;
     }
 };
 
@@ -132,8 +136,9 @@ onMounted(() => {
 </script>
 
 <template>
-    <div class="chart-card">
-        <div class="chart-card-toolbar">
+    <div class="relative w-full transition-all duration-300">
+        
+        <div class="absolute -top-12 right-0 z-20">
             <Button
                 icon="pi pi-refresh"
                 severity="secondary"
@@ -141,114 +146,28 @@ onMounted(() => {
                 text
                 size="small"
                 @click="loadChartData"
-                :loading="loading"
-                class="chart-refresh-btn"
+                :loading="isLoading"
             />
         </div>
 
-        <div v-if="chartData" class="chart-container">
-            <Chart type="bar" :data="chartData" :options="chartOptions" class="chart-canvas" />
+        <div v-if="chartData && !isLoading" class="h-80 w-full mt-2">
+            <Chart type="bar" :data="chartData" :options="chartOptions" class="w-full h-full" />
         </div>
 
-        <div v-else-if="loading" class="chart-empty chart-empty--loading">
-            <i class="pi pi-spin pi-spinner text-4xl text-primary mb-3"></i>
-            <span class="text-sm font-medium text-color-secondary">Memproses data grafik...</span>
-        </div>
-
-        <div v-else class="chart-empty">
-            <div class="chart-empty-icon">
-                <i class="pi pi-chart-bar"></i>
+        <div v-else-if="isLoading" class="h-80 w-full flex flex-col justify-between py-4 px-2">
+            <div v-for="i in 5" :key="i" class="flex items-center gap-4 w-full">
+                <Skeleton width="40px" height="14px" class="shrink-0"></Skeleton>
+                <Skeleton :width="Math.floor(Math.random() * (85 - 40 + 1)) + 40 + '%'" height="14px" borderRadius="20px"></Skeleton>
             </div>
-            <h6 class="chart-empty-title">Data Tidak Tersedia</h6>
-            <p class="chart-empty-desc">Belum ada data pegawai untuk ditampilkan.</p>
         </div>
+
+        <div v-else class="h-80 border border-dashed border-surface-200 dark:border-surface-800 rounded-2xl flex flex-col items-center justify-center p-6 text-center">
+            <div class="w-12 h-12 rounded-full bg-surface-100 dark:bg-surface-800/50 flex items-center justify-center text-surface-400 mb-3">
+                <i class="pi pi-chart-bar text-xl"></i>
+            </div>
+            <h4 class="text-sm font-bold text-surface-900 dark:text-white m-0">Matriks Distribusi Kosong</h4>
+            <p class="text-xs text-surface-400 max-w-xs m-0 mt-1">Belum ada record golongan yang terekam.</p>
+        </div>
+
     </div>
 </template>
-
-<style scoped>
-.chart-card {
-    background: var(--surface-card);
-    border: 1px solid var(--surface-border);
-    border-radius: 1rem;
-    padding: 1.5rem;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
-    position: relative;
-    transition: all 0.2s ease;
-}
-
-.chart-card:hover {
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
-}
-
-.chart-card-toolbar {
-    position: absolute;
-    top: 1rem;
-    right: 1rem;
-    z-index: 2;
-}
-
-.chart-refresh-btn {
-    opacity: 0.8;
-}
-
-.chart-refresh-btn:hover {
-    opacity: 1;
-}
-
-.chart-container {
-    position: relative;
-    height: 20rem;
-    margin-top: 0.5rem;
-}
-
-.chart-canvas {
-    width: 100% !important;
-    height: 100% !important;
-}
-
-.chart-empty {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    min-height: 18rem;
-    padding: 2rem;
-    background: var(--surface-ground);
-    border-radius: 0.75rem;
-    border: 1px dashed var(--surface-border);
-}
-
-.chart-empty--loading {
-    border-style: solid;
-}
-
-.chart-empty-icon {
-    width: 4rem;
-    height: 4rem;
-    border-radius: 50%;
-    background: var(--surface-200);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin-bottom: 1rem;
-}
-
-.chart-empty-icon i {
-    font-size: 1.75rem;
-    color: var(--text-color-secondary);
-    opacity: 0.7;
-}
-
-.chart-empty-title {
-    font-size: 1rem;
-    font-weight: 700;
-    color: var(--text-color);
-    margin: 0 0 0.35rem 0;
-}
-
-.chart-empty-desc {
-    font-size: 0.875rem;
-    color: var(--text-color-secondary);
-    margin: 0;
-}
-</style>

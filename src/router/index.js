@@ -47,7 +47,8 @@ const router = createRouter({
                 {
                     path: '',
                     name: 'dashboard',
-                    component: () => import('@/views/Dashboard.vue'),
+                    // DISESUAIKAN: Sekarang mengarah ke folder @/pages sesuai struktur folder Anda
+                    component: () => import('@/pages/dashboards/Dashboard.vue'),
                     meta: { requiresAuth: true }
                 },
 
@@ -153,7 +154,7 @@ const router = createRouter({
                     meta: { requiresAuth: true, roles: ['super_admin', 'admin_kepegawaian'] }
                 },
 
-                // ---------- Admin: Administrasi Kepegawaian ----------
+                // ---------- Admin: Modul Administrasi Kepegawaian ----------
                 {
                     path: '/admin/mutasi',
                     name: 'admin-mutasi',
@@ -237,7 +238,7 @@ const router = createRouter({
     ]
 });
 
-// Route guard
+// Route guard (Navigasi Pengaman)
 router.beforeEach(async (to, from, next) => {
     const authStore = useAuthStore();
 
@@ -248,7 +249,7 @@ router.beforeEach(async (to, from, next) => {
 
     const isAuthenticated = authStore.isAuthenticated;
 
-    // Evaluasi Root '/' secara aman untuk menghindari putaran navigasi tanpa henti
+    // Evaluasi Root '/' secara aman untuk menghindari loop navigasi tanpa henti
     if (to.path === '/') {
         if (isAuthenticated) {
             return to.name === 'dashboard' ? next() : next({ name: 'dashboard' });
@@ -260,7 +261,7 @@ router.beforeEach(async (to, from, next) => {
     // Jika route memerlukan autentikasi
     if (to.meta.requiresAuth) {
         if (!isAuthenticated) {
-            // Jika belum login, tendang ke landing page
+            // Jika belum login, lempar ke landing page
             return next({ name: 'landing', query: { redirect: to.fullPath } });
         }
 
@@ -273,7 +274,7 @@ router.beforeEach(async (to, from, next) => {
         }
     }
 
-    // Jika pengguna sudah login, kunci akses ke halaman ber-meta 'requiresGuest' (login/landing)
+    // Jika pengguna sudah login, kunci akses ke halaman guest (login/landing)
     if (to.meta.requiresGuest && isAuthenticated) {
         return next({ name: 'dashboard' });
     }

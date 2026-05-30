@@ -3,11 +3,24 @@
     flex-direction: column;
     min-height: 100vh;
     justify-content: space-between;
-    padding: 6rem 2rem 0 2rem;
+    padding: 6rem 1rem 0 1rem; /* Kurangi padding kiri/kanan di layar kecil */
     transition: margin-left var(--layout-section-transition-duration);
 }
 
 .layout-main {
     flex: 1 1 auto;
     padding-bottom: 2rem;
+    
+    /* TAMBAHKAN INI UNTUK KONSISTENSI */
+    width: 100%;
+    max-width: 1400px; /* Lebar maksimal yang seragam untuk semua halaman */
+    margin: 0 auto;    /* Memastikan konten selalu berada di tengah */
+}
+
+/* Penyesuaian responsif untuk layar besar */
+@media screen and (min-width: 768px) {
+    .layout-main-container {
+        padding-left: 2rem;
+        padding-right: 2rem;
+    }
 }

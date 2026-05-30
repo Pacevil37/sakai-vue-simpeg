@@ -1,66 +1,13 @@
-<template>
-    <div class="role-widget">
-        <div class="role-widget-toolbar">
-            <div class="role-widget-tabs">
-                <button type="button" class="role-tab" :class="{ 'role-tab--active': activeTab === 'unit' }" @click="activeTab = 'unit'">
-                    Unit Kerja
-                </button>
-                <button type="button" class="role-tab" :class="{ 'role-tab--active': activeTab === 'jabatan' }" @click="activeTab = 'jabatan'">
-                    Jabatan
-                </button>
-            </div>
-            <Button icon="pi pi-refresh" severity="secondary" rounded text size="small" @click="loadStats" :loading="loading" class="role-refresh-btn" />
-        </div>
-
-        <Message v-if="errorMessage" severity="warn" :closable="false" class="role-message">{{ errorMessage }}</Message>
-
-        <div class="role-grid">
-            <div v-for="(item, index) in currentStats" :key="index" class="role-card" :class="getTheme(index).bg">
-                <div class="role-card-inner">
-                    <div class="role-card-header">
-                        <div class="role-card-icon" :class="getTheme(index).iconBg">
-                            <i :class="activeTab === 'unit' ? 'pi pi-building' : 'pi pi-briefcase'"></i>
-                        </div>
-                        <div class="role-card-count">
-                            <span class="role-card-number">{{ item.count }}</span>
-                            <span class="role-card-unit-label">Pegawai</span>
-                        </div>
-                    </div>
-                    <h3 class="role-card-title" :title="item.name">{{ item.name }}</h3>
-                    <div class="role-card-progress">
-                        <div class="role-card-progress-meta">
-                            <span class="role-card-progress-label">Persentase</span>
-                            <span class="role-card-progress-value" :class="getTheme(index).text">{{ calculatePercentage(item.count) }}%</span>
-                        </div>
-                        <div class="role-card-progress-bar">
-                            <div class="role-card-progress-fill" :class="getTheme(index).iconBg" :style="{ width: calculatePercentage(item.count) + '%' }"></div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div v-if="currentStats.length === 0 && !loading" class="role-empty">
-            <div class="role-empty-icon"><i class="pi pi-inbox"></i></div>
-            <h6 class="role-empty-title">Data Belum Tersedia</h6>
-            <p class="role-empty-desc">Data statistik akan muncul setelah data pegawai diinput ke dalam sistem.</p>
-        </div>
-
-        <div v-if="loading && currentStats.length === 0" class="role-skeleton">
-            <div v-for="i in 6" :key="i" class="role-skeleton-card"></div>
-        </div>
-    </div>
-</template>
-
 <script setup>
 import { ref, onMounted, computed } from 'vue';
 import { supabase } from '@/lib/supabase';
 import Button from 'primevue/button';
 import Message from 'primevue/message';
+import Skeleton from 'primevue/skeleton';
 
 const unitStats = ref([]);
 const jabatanStats = ref([]);
-const loading = ref(false);
+const isLoading = ref(false);
 const errorMessage = ref(null);
 const activeTab = ref('unit');
 
@@ -69,23 +16,22 @@ const totalEmployeesJabatan = computed(() => jabatanStats.value.reduce((acc, cur
 const currentStats = computed(() => activeTab.value === 'unit' ? unitStats.value : jabatanStats.value);
 const currentTotal = computed(() => activeTab.value === 'unit' ? totalEmployeesUnit.value : totalEmployeesJabatan.value);
 
+// Token Warna Adaptif Premium (Menghilangkan Hardcoded CSS Lama)
 const themeList = [
-    { bg: 'role-card--blue', iconBg: 'role-icon--blue', text: 'role-text--blue' },
-    { bg: 'role-card--purple', iconBg: 'role-icon--purple', text: 'role-text--purple' },
-    { bg: 'role-card--teal', iconBg: 'role-icon--teal', text: 'role-text--teal' },
-    { bg: 'role-card--orange', iconBg: 'role-icon--orange', text: 'role-text--orange' },
-    { bg: 'role-card--pink', iconBg: 'role-icon--pink', text: 'role-text--pink' },
-    { bg: 'role-card--indigo', iconBg: 'role-icon--indigo', text: 'role-text--indigo' },
-    { bg: 'role-card--cyan', iconBg: 'role-icon--cyan', text: 'role-text--cyan' }
+    { cardBg: 'bg-blue-500/5 dark:bg-blue-500/10 border-blue-500/20', iconBg: 'bg-blue-500 text-white', text: 'text-blue-600 dark:text-blue-400', progressBg: 'bg-blue-500' },
+    { cardBg: 'bg-purple-500/5 dark:bg-purple-500/10 border-purple-500/20', iconBg: 'bg-purple-500 text-white', text: 'text-purple-600 dark:text-purple-400', progressBg: 'bg-purple-500' },
+    { cardBg: 'bg-emerald-500/5 dark:bg-emerald-500/10 border-emerald-500/20', iconBg: 'bg-emerald-500 text-white', text: 'text-emerald-600 dark:text-emerald-400', progressBg: 'bg-emerald-500' },
+    { cardBg: 'bg-amber-500/5 dark:bg-amber-500/10 border-amber-500/20', iconBg: 'bg-amber-500 text-white', text: 'text-amber-600 dark:text-amber-400', progressBg: 'bg-amber-500' },
+    { cardBg: 'bg-pink-500/5 dark:bg-pink-500/10 border-pink-500/20', iconBg: 'bg-pink-500 text-white', text: 'text-pink-600 dark:text-pink-400', progressBg: 'bg-pink-500' },
+    { cardBg: 'bg-indigo-500/5 dark:bg-indigo-500/10 border-indigo-500/20', iconBg: 'bg-indigo-500 text-white', text: 'text-indigo-600 dark:text-indigo-400', progressBg: 'bg-indigo-500' },
+    { cardBg: 'bg-cyan-500/5 dark:bg-cyan-500/10 border-cyan-500/20', iconBg: 'bg-cyan-500 text-white', text: 'text-cyan-600 dark:text-cyan-400', progressBg: 'bg-cyan-500' }
 ];
 
 const getTheme = (index) => themeList[index % themeList.length];
 const calculatePercentage = (count) => (currentTotal.value === 0 ? 0 : Math.round((count / currentTotal.value) * 100));
 
-// Ambil data unit kerja (bergantung pada tabel units)
 const fetchUnitStats = async () => {
     try {
-        // 1. Ambil semua pegawai yang memiliki unit_kerja_id
         const { data: pegawai, error: errPegawai } = await supabase
             .from('pegawai')
             .select('unit_kerja_id')
@@ -93,7 +39,6 @@ const fetchUnitStats = async () => {
         if (errPegawai) throw errPegawai;
         if (!pegawai.length) return [];
 
-        // 2. Ambil semua unit yang terlibat
         const unitIds = [...new Set(pegawai.map(p => p.unit_kerja_id))];
         const { data: units, error: errUnits } = await supabase
             .from('units')
@@ -101,10 +46,7 @@ const fetchUnitStats = async () => {
             .in('id', unitIds);
         if (errUnits) throw errUnits;
 
-        // 3. Mapping id -> name
         const unitMap = Object.fromEntries(units.map(u => [u.id, u.name]));
-
-        // 4. Hitung jumlah per unit
         const counts = {};
         pegawai.forEach(p => {
             const name = unitMap[p.unit_kerja_id] || 'Unit Tidak Dikenal';
@@ -118,7 +60,6 @@ const fetchUnitStats = async () => {
     }
 };
 
-// Ambil data jabatan (langsung dari kolom jabatan)
 const fetchJabatanStats = async () => {
     try {
         const { data, error } = await supabase
@@ -140,31 +81,28 @@ const fetchJabatanStats = async () => {
 };
 
 const loadStats = async () => {
-    loading.value = true;
+    isLoading.value = true;
     errorMessage.value = null;
     try {
         const [unit, jabatan] = await Promise.all([fetchUnitStats(), fetchJabatanStats()]);
         unitStats.value = unit;
         jabatanStats.value = jabatan;
     } catch (err) {
-        errorMessage.value = 'Gagal mengambil data dari database. Menampilkan data simulasi.';
-        // Fallback data agar widget tetap terlihat
+        errorMessage.value = 'Gagal mengambil data real-time. Menampilkan data fallback sistem.';
         unitStats.value = [
-            { name: 'Sekretariat', count: 45 },
+            { name: 'Sekretariat Utama', count: 45 },
             { name: 'Pendidikan Islam', count: 82 },
             { name: 'Haji & Umrah', count: 28 },
-            { name: 'Bimas Islam', count: 56 },
-            { name: 'Bimas Kristen', count: 34 }
+            { name: 'Bimas Islam', count: 56 }
         ];
         jabatanStats.value = [
-            { name: 'Guru', count: 120 },
-            { name: 'Penyuluh', count: 45 },
-            { name: 'Pranata Komputer', count: 15 },
-            { name: 'Analyst', count: 25 },
-            { name: 'Staf Administrasi', count: 60 }
+            { name: 'Fungsional Guru', count: 120 },
+            { name: 'Penyuluh Keagamaan', count: 45 },
+            { name: 'Pranata Komputer AI', count: 15 },
+            { name: 'Analisis Kepegawaian', count: 25 }
         ];
     } finally {
-        loading.value = false;
+        isLoading.value = false;
     }
 };
 
@@ -173,274 +111,101 @@ onMounted(() => {
 });
 </script>
 
-<style scoped>
-/* (semua style tetap sama seperti yang Anda miliki) */
-.role-widget {
-    background: var(--surface-card);
-    border: 1px solid var(--surface-border);
-    border-radius: 1rem;
-    padding: 1.5rem;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
-    transition: all 0.2s ease;
-}
+<template>
+    <div class="w-full transition-all duration-300">
+        
+        <div class="flex items-center justify-between flex-wrap gap-4 mb-6">
+            <div class="flex items-center bg-surface-100 dark:bg-surface-800/60 p-1 rounded-xl gap-1">
+                <button 
+                    type="button" 
+                    @click="activeTab = 'unit'"
+                    class="px-4 py-1.5 border-none rounded-lg text-xs font-bold tracking-wide transition-all duration-200 cursor-pointer"
+                    :class="activeTab === 'unit' 
+                        ? 'bg-surface-0 text-emerald-600 dark:bg-surface-900 dark:text-emerald-400 shadow-sm' 
+                        : 'bg-transparent text-surface-500 dark:text-surface-400 hover:text-surface-800'"
+                >
+                    UNIT KERJA
+                </button>
+                <button 
+                    type="button" 
+                    @click="activeTab = 'jabatan'"
+                    class="px-4 py-1.5 border-none rounded-lg text-xs font-bold tracking-wide transition-all duration-200 cursor-pointer"
+                    :class="activeTab === 'jabatan' 
+                        ? 'bg-surface-0 text-emerald-600 dark:bg-surface-900 dark:text-emerald-400 shadow-sm' 
+                        : 'bg-transparent text-surface-500 dark:text-surface-400 hover:text-surface-800'"
+                >
+                    STRUKTUR JABATAN
+                </button>
+            </div>
+            
+            <Button icon="pi pi-refresh" severity="secondary" rounded text size="small" @click="loadStats" :loading="isLoading" />
+        </div>
 
-.role-widget:hover {
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
-}
+        <Message v-if="errorMessage" severity="warn" :closable="false" class="mb-4 text-xs">{{ errorMessage }}</Message>
 
-.role-widget-toolbar {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    flex-wrap: wrap;
-    gap: 1rem;
-    margin-bottom: 1.25rem;
-}
+        <div v-if="currentStats.length > 0 && !isLoading" class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-2 gap-4">
+            <div 
+                v-for="(item, index) in currentStats" 
+                :key="index" 
+                class="group relative overflow-hidden border rounded-2xl p-4 transition-all duration-300 hover:-translate-y-1 hover:shadow-md"
+                :class="getTheme(index).cardBg"
+            >
+                <div class="absolute -right-6 -top-6 w-16 h-16 bg-current opacity-[0.03] rounded-full pointer-events-none"></div>
 
-.role-widget-tabs {
-    display: flex;
-    align-items: center;
-    background: var(--surface-100);
-    padding: 0.25rem;
-    border-radius: 0.75rem;
-    gap: 0.15rem;
-}
+                <div class="relative z-10 flex flex-col justify-between h-full gap-4">
+                    <div class="flex items-start justify-between w-full">
+                        <div class="w-10 h-10 rounded-xl flex items-center justify-center text-sm shadow-sm" :class="getTheme(index).iconBg">
+                            <i :class="activeTab === 'unit' ? 'pi pi-building' : 'pi pi-briefcase'"></i>
+                        </div>
+                        <div class="text-right">
+                            <span class="block text-xl font-black text-surface-900 dark:text-white tracking-tight leading-none">{{ item.count }}</span>
+                            <span class="text-[9px] font-extrabold uppercase tracking-widest text-surface-400 mt-1 block">Aparatur</span>
+                        </div>
+                    </div>
 
-.role-tab {
-    padding: 0.5rem 1rem;
-    border: none;
-    border-radius: 0.5rem;
-    font-size: 0.875rem;
-    font-weight: 600;
-    color: var(--text-color-secondary);
-    background: transparent;
-    cursor: pointer;
-    transition: all 0.2s ease;
-}
+                    <div class="min-h-[2.5rem] flex items-center">
+                        <h4 class="text-xs font-extrabold text-surface-800 dark:text-surface-100 m-0 line-clamp-2 tracking-tight group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors" :title="item.name">
+                            {{ item.name }}
+                        </h4>
+                    </div>
 
-.role-tab:hover {
-    color: var(--text-color);
-}
+                    <div class="w-full pt-1">
+                        <div class="flex items-center justify-between text-[10px] font-bold text-surface-400 mb-1.5">
+                            <span>Distribusi Proporsi</span>
+                            <span :class="getTheme(index).text" class="font-black">{{ calculatePercentage(item.count) }}%</span>
+                        </div>
+                        <div class="h-1.5 w-full bg-surface-200 dark:bg-surface-800 rounded-full overflow-hidden">
+                            <div 
+                                class="h-full rounded-full transition-all duration-700 ease-out" 
+                                :class="getTheme(index).progressBg"
+                                :style="{ width: calculatePercentage(item.count) + '%' }"
+                            ></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
 
-.role-tab--active {
-    background: var(--surface-card);
-    color: var(--primary-color);
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
-}
+        <div v-else-if="isLoading" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div v-for="i in 4" :key="i" class="border border-surface-200 dark:border-surface-800 bg-surface-0 dark:bg-surface-900 rounded-2xl p-4 flex flex-col gap-4">
+                <div class="flex justify-between items-center">
+                    <Skeleton shape="circle" size="2.5rem"></Skeleton>
+                    <Skeleton width="40px" height="1.25rem"></Skeleton>
+                </div>
+                <Skeleton width="75%" height="1rem" class="mt-2"></Skeleton>
+                <div class="space-y-1 mt-2">
+                    <Skeleton width="100%" height="6px"></Skeleton>
+                </div>
+            </div>
+        </div>
 
-.role-refresh-btn {
-    opacity: 0.85;
-}
+        <div v-else class="text-center py-12 border border-dashed border-surface-200 dark:border-surface-800 rounded-2xl flex flex-col items-center justify-center p-6">
+            <div class="w-12 h-12 rounded-full bg-surface-100 dark:bg-surface-800 flex items-center justify-center text-surface-400 mb-3">
+                <i class="pi pi-inbox text-xl"></i>
+            </div>
+            <h4 class="text-xs font-bold text-surface-900 dark:text-white m-0">Data Sektoral Belum Terbaca</h4>
+            <p class="text-[11px] text-surface-400 max-w-xs m-0 mt-1">Struktur statistik penempatan dinas akan terisi otomatis setelah pembaruan data master.</p>
+        </div>
 
-.role-message {
-    margin-bottom: 1rem;
-}
-
-.role-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-    gap: 1rem;
-}
-
-.role-card {
-    border-radius: 1rem;
-    padding: 1.25rem;
-    border: 1px solid transparent;
-    transition: all 0.2s ease;
-    position: relative;
-    overflow: hidden;
-}
-
-.role-card::before {
-    content: '';
-    position: absolute;
-    top: -1.5rem;
-    right: -1.5rem;
-    width: 6rem;
-    height: 6rem;
-    border-radius: 50%;
-    opacity: 0.08;
-}
-
-.role-card:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.08);
-}
-
-.role-card--blue { background: rgba(59, 130, 246, 0.06); border-color: rgba(59, 130, 246, 0.2); }
-.role-card--blue::before { background: #3b82f6; }
-.role-card--purple { background: rgba(139, 92, 246, 0.06); border-color: rgba(139, 92, 246, 0.2); }
-.role-card--purple::before { background: #8b5cf6; }
-.role-card--teal { background: rgba(20, 184, 166, 0.06); border-color: rgba(20, 184, 166, 0.2); }
-.role-card--teal::before { background: #14b8a6; }
-.role-card--orange { background: rgba(249, 115, 22, 0.06); border-color: rgba(249, 115, 22, 0.2); }
-.role-card--orange::before { background: #f97316; }
-.role-card--pink { background: rgba(236, 72, 153, 0.06); border-color: rgba(236, 72, 153, 0.2); }
-.role-card--pink::before { background: #ec4899; }
-.role-card--indigo { background: rgba(99, 102, 241, 0.06); border-color: rgba(99, 102, 241, 0.2); }
-.role-card--indigo::before { background: #6366f1; }
-.role-card--cyan { background: rgba(6, 182, 212, 0.06); border-color: rgba(6, 182, 212, 0.2); }
-.role-card--cyan::before { background: #06b6d4; }
-
-.role-card-inner {
-    position: relative;
-    z-index: 1;
-}
-
-.role-card-header {
-    display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
-    margin-bottom: 1rem;
-}
-
-.role-card-icon {
-    width: 2.75rem;
-    height: 2.75rem;
-    border-radius: 0.75rem;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: #fff;
-}
-
-.role-card-icon i {
-    font-size: 1.2rem;
-}
-
-.role-icon--blue { background: linear-gradient(135deg, #2563eb, #3b82f6); }
-.role-icon--purple { background: linear-gradient(135deg, #7c3aed, #8b5cf6); }
-.role-icon--teal { background: linear-gradient(135deg, #0d9488, #14b8a6); }
-.role-icon--orange { background: linear-gradient(135deg, #ea580c, #f97316); }
-.role-icon--pink { background: linear-gradient(135deg, #be185d, #ec4899); }
-.role-icon--indigo { background: linear-gradient(135deg, #4f46e5, #6366f1); }
-.role-icon--cyan { background: linear-gradient(135deg, #0891b2, #06b6d4); }
-
-.role-card-count {
-    text-align: right;
-}
-
-.role-card-number {
-    display: block;
-    font-size: 1.5rem;
-    font-weight: 800;
-    color: var(--text-color);
-    letter-spacing: -0.02em;
-}
-
-.role-card-unit-label {
-    font-size: 0.7rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    opacity: 0.6;
-}
-
-.role-card-title {
-    font-size: 1rem;
-    font-weight: 700;
-    color: var(--text-color);
-    margin: 0 0 1rem 0;
-    line-height: 1.4;
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-    min-height: 2.8em;
-}
-
-.role-card-progress-meta {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 0.5rem;
-}
-
-.role-card-progress-label {
-    font-size: 0.75rem;
-    font-weight: 600;
-    color: var(--text-color-secondary);
-}
-
-.role-card-progress-value {
-    font-size: 0.875rem;
-    font-weight: 800;
-}
-
-.role-text--blue { color: #2563eb; }
-.role-text--purple { color: #7c3aed; }
-.role-text--teal { color: #0d9488; }
-.role-text--orange { color: #ea580c; }
-.role-text--pink { color: #be185d; }
-.role-text--indigo { color: #4f46e5; }
-.role-text--cyan { color: #0891b2; }
-
-.role-card-progress-bar {
-    height: 6px;
-    background: var(--surface-200);
-    border-radius: 9999px;
-    overflow: hidden;
-}
-
-.role-card-progress-fill {
-    height: 100%;
-    border-radius: 9999px;
-    transition: width 0.6s ease;
-}
-
-.role-empty {
-    text-align: center;
-    padding: 2.5rem 1.5rem;
-}
-
-.role-empty-icon {
-    width: 4rem;
-    height: 4rem;
-    border-radius: 1rem;
-    background: var(--surface-100);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin: 0 auto 1rem;
-}
-
-.role-empty-icon i {
-    font-size: 2rem;
-    color: var(--text-color-secondary);
-    opacity: 0.6;
-}
-
-.role-empty-title {
-    font-size: 1.1rem;
-    font-weight: 700;
-    color: var(--text-color);
-    margin: 0 0 0.35rem 0;
-}
-
-.role-empty-desc {
-    font-size: 0.875rem;
-    color: var(--text-color-secondary);
-    margin: 0;
-    max-width: 20rem;
-    margin-left: auto;
-    margin-right: auto;
-}
-
-.role-skeleton {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-    gap: 1rem;
-}
-
-.role-skeleton-card {
-    height: 10rem;
-    background: var(--surface-100);
-    border-radius: 1rem;
-    animation: role-pulse 1.5s ease-in-out infinite;
-}
-
-@keyframes role-pulse {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.6; }
-}
-</style>
+    </div>
+</template>
