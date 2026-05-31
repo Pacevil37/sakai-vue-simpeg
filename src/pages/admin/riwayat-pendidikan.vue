@@ -167,7 +167,7 @@ onMounted(() => { loadPegawaiOptions(); loadData(); });
 </script>
 
 <template>
-    <div class="w-full max-w-[1400px] mx-auto p-6 md:p-10 flex flex-col gap-8 antialiased">
+    <div class="w-full mx-auto p-6 md:p-10 flex flex-col gap-8 antialiased">
         
         <div class="bg-white dark:bg-zinc-900 p-8 rounded-2xl border border-zinc-200/60 dark:border-zinc-800/60 shadow-sm flex flex-col gap-8">
             <div class="flex flex-col md:flex-row md:items-end justify-between gap-6">

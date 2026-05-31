@@ -1,251 +1,148 @@
 <template>
-  <div class="kinerja-page">
-    <!-- Header -->
-    <div class="kinerja-header">
-      <div class="kinerja-header-content">
-        <div class="kinerja-header-icon">
-          <i class="pi pi-chart-line"></i>
+  <div class="w-full mx-auto p-6 md:p-10 flex flex-col gap-8 antialiased">
+    
+    <div class="bg-white dark:bg-zinc-900 p-8 rounded-2xl border border-zinc-200/60 dark:border-zinc-800/60 shadow-sm flex flex-col gap-8">
+      <div class="flex flex-col md:flex-row md:items-end justify-between gap-6">
+        <div class="flex items-start gap-5">
+          <div class="w-14 h-14 rounded-2xl bg-zinc-950 text-white flex items-center justify-center shrink-0 shadow-xl shadow-zinc-500/20">
+            <i class="pi pi-chart-line text-xl"></i>
+          </div>
+          <div>
+            <div class="flex items-center gap-2 text-[10px] font-bold tracking-[0.2em] text-zinc-400 dark:text-zinc-500 uppercase mb-2">
+              <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span> Performance Metrics System
+            </div>
+            <h1 class="text-2xl font-bold tracking-tight text-zinc-900 dark:text-white m-0 uppercase">Penilaian Kinerja</h1>
+            <p class="text-xs text-zinc-400 dark:text-zinc-500 m-0 mt-2 max-w-2xl leading-relaxed font-medium">
+              Monitor pencapaian target dan evaluasi kompetensi pegawai secara periodik.
+            </p>
+          </div>
         </div>
-        <div>
-          <h1 class="kinerja-title">Penilaian Kinerja</h1>
-          <p class="kinerja-subtitle">Kelola penilaian kinerja pegawai</p>
+        <div class="flex gap-3">
+            <Button icon="pi pi-sync" class="p-4 bg-zinc-100 text-zinc-600 border-0 rounded-xl hover:bg-zinc-200 transition-all" @click="loadData" :loading="loading" />
+            <Button label="Tambah Penilaian" icon="pi pi-plus" class="text-xs font-black bg-zinc-950 dark:bg-white text-white dark:text-zinc-950 px-8 py-4 rounded-xl border-0 shadow-lg uppercase tracking-widest" @click="openCreateModal" />
         </div>
       </div>
-      <div class="kinerja-header-actions">
-        <InputGroup class="search-input">
-          <InputGroupAddon>
-            <i class="pi pi-search"></i>
-          </InputGroupAddon>
-          <InputText v-model="searchQuery" placeholder="Cari NIP atau nama pegawai..." />
-        </InputGroup>
-        <Button icon="pi pi-refresh" severity="secondary" @click="loadData" :loading="loading" />
-        <Button label="Tambah Penilaian" icon="pi pi-plus" @click="openCreateModal" class="btn-primary" />
-      </div>
-    </div>
 
-    <!-- Filter tambahan (tahun & range nilai) -->
-    <div class="kinerja-filters">
-      <div class="filter-item">
-        <label>Tahun</label>
-        <InputNumber v-model="filterTahun" placeholder="Tahun" :min="2000" :max="2100" />
-      </div>
-      <div class="filter-item">
-        <label>Range Nilai</label>
-        <Select
-          v-model="filterRangeNilai"
-          :options="rangeNilaiOptions"
-          optionLabel="label"
-          optionValue="value"
-          placeholder="Semua range"
-          clearable
-        />
-      </div>
-      <div class="filter-item">
-        <Button label="Terapkan Filter" icon="pi pi-filter" @click="applyFilters" />
-        <Button label="Reset" icon="pi pi-times" severity="secondary" outlined @click="resetFilters" />
-      </div>
-    </div>
+      <div class="h-[1px] w-full bg-zinc-100 dark:bg-zinc-800/50"></div>
 
-    <!-- Statistik -->
-    <div class="stats-grid">
-      <div class="stat-card bg-blue-50">
-        <div class="stat-icon">
-          <i class="pi pi-chart-bar"></i>
+      <div class="flex flex-col lg:flex-row items-center justify-between gap-6">
+        <div class="flex flex-wrap items-center gap-4 w-full lg:w-auto">
+          <InputGroup class="max-w-md group shadow-sm rounded-xl overflow-hidden">
+            <InputGroupAddon class="bg-zinc-50 dark:bg-zinc-950 border-zinc-200 dark:border-zinc-800">
+              <i class="pi pi-search text-[10px] text-zinc-400"></i>
+            </InputGroupAddon>
+            <InputText v-model="searchQuery" placeholder="Cari NIP atau Nama..." class="text-xs p-3 border-zinc-200 dark:border-zinc-800 bg-zinc-50/50 focus:ring-0" />
+          </InputGroup>
+          
+          <div class="flex items-center gap-2">
+            <InputNumber v-model="filterTahun" placeholder="Tahun" :useGrouping="false" class="w-24 text-xs h-10 border-zinc-200" />
+            <Select v-model="filterRangeNilai" :options="rangeNilaiOptions" optionLabel="label" optionValue="value" placeholder="Range" class="text-xs h-10 w-40 border-zinc-200" />
+            <Button icon="pi pi-filter" text class="p-2 text-zinc-400 hover:text-zinc-900" @click="loadData" />
+          </div>
         </div>
-        <div class="stat-info">
-          <span class="stat-label">Total Penilaian</span>
-          <span class="stat-value">{{ stats.total }}</span>
-        </div>
-      </div>
-      <div class="stat-card bg-green-50">
-        <div class="stat-icon">
-          <i class="pi pi-star"></i>
-        </div>
-        <div class="stat-info">
-          <span class="stat-label">Sangat Baik (≥90)</span>
-          <span class="stat-value">{{ stats.sangatBaik }}</span>
-        </div>
-      </div>
-      <div class="stat-card bg-yellow-50">
-        <div class="stat-icon">
-          <i class="pi pi-thumbs-up"></i>
-        </div>
-        <div class="stat-info">
-          <span class="stat-label">Baik (80-89)</span>
-          <span class="stat-value">{{ stats.baik }}</span>
-        </div>
-      </div>
-      <div class="stat-card bg-orange-50">
-        <div class="stat-icon">
-          <i class="pi pi-minus-circle"></i>
-        </div>
-        <div class="stat-info">
-          <span class="stat-label">Cukup (70-79)</span>
-          <span class="stat-value">{{ stats.cukup }}</span>
+        
+        <div class="flex gap-8">
+          <div v-for="(val, label) in statsSummary" :key="label" class="flex flex-col items-end">
+            <span class="text-[9px] uppercase font-black text-zinc-400 tracking-widest">{{ label }}</span>
+            <span class="text-base font-black text-zinc-900 dark:text-zinc-100 tracking-tighter">{{ val }}</span>
+          </div>
         </div>
       </div>
     </div>
 
-    <!-- Data Table -->
-    <div class="kinerja-table-wrap">
-      <DataTable
-        :value="items"
-        :loading="loading"
-        paginator
-        :rows="10"
-        :rowsPerPageOptions="[10, 25, 50]"
-        paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
-        currentPageReportTemplate="Menampilkan {first} sampai {last} dari {totalRecords} penilaian"
-        class="kinerja-datatable"
-      >
-        <Column field="pegawai.nip" header="NIP" sortable>
+    <div class="flex flex-col gap-4">
+      <DataTable :value="items" :loading="loading" :pt="tablePT" paginator :rows="10">
+        <Column header="Profil Pegawai">
           <template #body="{ data }">
-            <span class="font-mono">{{ data.pegawai?.nip || '-' }}</span>
-          </template>
-        </Column>
-        <Column field="pegawai.nama" header="Nama Pegawai" sortable>
-          <template #body="{ data }">
-            <span class="font-semibold">{{ data.pegawai?.nama || '-' }}</span>
-          </template>
-        </Column>
-        <Column field="tahun" header="Tahun" sortable />
-        <Column field="periode" header="Periode" />
-        <Column field="nilai" header="Nilai" sortable>
-          <template #body="{ data }">
-            <div class="flex align-items-center gap-2">
-              <span class="font-bold">{{ data.nilai }}</span>
-              <Tag :value="getKategoriNilai(data.nilai)" :severity="getSeverityNilai(data.nilai)" />
+            <div class="flex items-center gap-4">
+                <div class="w-10 h-10 rounded-full bg-zinc-100 flex items-center justify-center font-black text-zinc-400 text-[10px]">
+                    {{ data.pegawai?.nama?.substring(0,2).toUpperCase() }}
+                </div>
+                <div class="flex flex-col">
+                  <span class="font-black text-zinc-800 dark:text-zinc-200 tracking-tight text-sm uppercase">{{ data.pegawai?.nama }}</span>
+                  <span class="text-[10px] font-mono text-zinc-400 tracking-tighter">NIP: {{ data.pegawai?.nip || '-' }}</span>
+                </div>
             </div>
           </template>
         </Column>
-        <Column field="penilai" header="Penilai" />
-        <Column header="Aksi" :exportable="false" style="min-width: 8rem">
+        
+        <Column field="tahun" header="Tahun" class="text-xs font-bold text-zinc-600" />
+        <Column field="periode" header="Periode" class="text-xs text-zinc-500" />
+
+        <Column header="Evaluasi">
           <template #body="{ data }">
-            <div class="flex gap-2">
-              <Button icon="pi pi-eye" severity="info" size="small" @click="viewDetail(data)" v-tooltip.top="'Lihat'" />
-              <Button icon="pi pi-pencil" severity="warning" size="small" @click="openEditModal(data)" v-tooltip.top="'Edit'" />
-              <Button icon="pi pi-trash" severity="danger" size="small" @click="confirmDelete(data)" v-tooltip.top="'Hapus'" />
+            <div class="flex flex-col gap-2">
+              <div class="flex items-center gap-2">
+                <span class="text-sm font-black text-zinc-900">{{ data.nilai }}</span>
+                <div class="h-1 w-12 bg-zinc-100 rounded-full overflow-hidden">
+                  <div class="h-full bg-zinc-900" :style="{ width: data.nilai + '%' }"></div>
+                </div>
+              </div>
+              <Tag :value="getKategoriNilai(data.nilai)" :pt="tagPT(data.nilai)" />
             </div>
           </template>
         </Column>
-        <template #empty>
-          <div class="text-center py-4">Belum ada data penilaian kinerja. Klik "Tambah Penilaian".</div>
-        </template>
+
+        <Column field="penilai" header="Penilai" class="text-[10px] uppercase font-bold text-zinc-400" />
+
+        <Column header="Action" class="w-[120px]" bodyClass="text-right">
+          <template #body="{ data }">
+            <div class="flex items-center justify-end gap-1">
+              <Button icon="pi pi-eye" text rounded class="p-button-sm text-zinc-400 hover:text-blue-500" @click="viewDetail(data)" />
+              <Button icon="pi pi-pencil" text rounded class="p-button-sm text-zinc-400 hover:text-zinc-950" @click="openEditModal(data)" />
+              <Button icon="pi pi-trash" text rounded severity="danger" class="p-button-sm text-zinc-300 hover:text-red-500" @click="confirmDelete(data)" />
+            </div>
+          </template>
+        </Column>
       </DataTable>
     </div>
 
-    <!-- Dialog Form Tambah/Edit -->
-    <Dialog
-      v-model:visible="showDialog"
-      :header="isEditing ? 'Edit Penilaian Kinerja' : 'Tambah Penilaian Kinerja'"
-      :style="{ width: '500px' }"
-      modal
-    >
-      <div class="field">
-        <label>Pegawai <span class="text-red-500">*</span></label>
-        <Select
-          v-model="form.pegawai_id"
-          :options="pegawaiOptions"
-          optionLabel="label"
-          optionValue="value"
-          placeholder="Pilih pegawai"
-          :class="{ 'p-invalid': errors.pegawai_id }"
-          filter
-          showClear
-        />
-        <small v-if="errors.pegawai_id" class="p-error">{{ errors.pegawai_id }}</small>
-      </div>
-      <div class="field">
-        <label>Tahun <span class="text-red-500">*</span></label>
-        <InputNumber v-model="form.tahun" :min="2000" :max="2100" :class="{ 'p-invalid': errors.tahun }" />
-        <small v-if="errors.tahun" class="p-error">{{ errors.tahun }}</small>
-      </div>
-      <div class="field">
-        <label>Periode</label>
-        <InputText v-model="form.periode" placeholder="Contoh: Semester I, Jan-Jun" />
-      </div>
-      <div class="field">
-        <label>Nilai <span class="text-red-500">*</span></label>
-        <InputNumber v-model="form.nilai" :min="0" :max="100" :class="{ 'p-invalid': errors.nilai }" />
-        <small v-if="errors.nilai" class="p-error">{{ errors.nilai }}</small>
-      </div>
-      <div class="field">
-        <label>Penilai</label>
-        <InputText v-model="form.penilai" placeholder="Nama penilai" />
-      </div>
-      <div class="field">
-        <label>Komentar</label>
-        <Textarea v-model="form.komentar" rows="3" placeholder="Komentar atau catatan" />
-      </div>
-      <div class="field">
-        <label>Rekomendasi</label>
-        <Textarea v-model="form.rekomendasi" rows="2" placeholder="Rekomendasi tindak lanjut" />
+    <Dialog v-model:visible="showDialog" :header="isEditing ? 'REVISI PENILAIAN' : 'TAMBAH PENILAIAN'" :pt="dialogPT" modal :style="{ width: '550px' }">
+      <div class="flex flex-col gap-6 py-6">
+        <div class="flex flex-col gap-3">
+          <label class="text-[10px] font-black text-zinc-500 uppercase tracking-[0.2em]">Select Employee <span class="text-red-500">*</span></label>
+          <Select v-model="form.pegawai_id" :options="pegawaiOptions" optionLabel="label" optionValue="value" filter placeholder="Cari nama pegawai..." class="w-full text-xs border-zinc-200 bg-zinc-50/50 rounded-xl h-14 flex items-center px-2" />
+        </div>
+
+        <div class="grid grid-cols-2 gap-6">
+          <div class="flex flex-col gap-3">
+            <label class="text-[10px] font-black text-zinc-500 uppercase tracking-[0.2em]">Tahun <span class="text-red-500">*</span></label>
+            <InputNumber v-model="form.tahun" :useGrouping="false" class="w-full text-xs p-2 border-zinc-200 bg-zinc-50/50 rounded-xl" />
+          </div>
+          <div class="flex flex-col gap-3">
+            <label class="text-[10px] font-black text-zinc-500 uppercase tracking-[0.2em]">Nilai (0-100) <span class="text-red-500">*</span></label>
+            <InputNumber v-model="form.nilai" :min="0" :max="100" class="w-full text-xs p-2 border-zinc-200 bg-zinc-50/50 rounded-xl font-bold" />
+          </div>
+        </div>
+
+        <div class="flex flex-col gap-3">
+          <label class="text-[10px] font-black text-zinc-500 uppercase tracking-[0.2em]">Periode & Penilai</label>
+          <div class="flex gap-2">
+            <InputText v-model="form.periode" placeholder="Contoh: Semester I" class="flex-1 text-xs p-4 border-zinc-200 rounded-xl" />
+            <InputText v-model="form.penilai" placeholder="Nama Penilai" class="flex-1 text-xs p-4 border-zinc-200 rounded-xl" />
+          </div>
+        </div>
+
+        <div class="flex flex-col gap-3">
+          <label class="text-[10px] font-black text-zinc-500 uppercase tracking-[0.2em]">Komentar & Catatan</label>
+          <Textarea v-model="form.komentar" rows="3" class="w-full text-xs p-4 border-zinc-200 rounded-xl" />
+        </div>
       </div>
       <template #footer>
-        <Button label="Batal" severity="secondary" outlined @click="closeDialog" />
-        <Button label="Simpan" @click="saveData" :loading="submitting" />
+        <div class="flex items-center justify-end gap-3 w-full pt-6 border-t border-zinc-50">
+          <Button label="Batalkan" text class="text-[10px] font-black uppercase text-zinc-400 px-6" @click="showDialog = false" />
+          <Button label="Simpan Penilaian" class="text-[10px] font-black bg-zinc-950 text-white px-10 py-5 rounded-xl border-0 uppercase tracking-widest shadow-2xl" :loading="submitting" @click="saveData" />
+        </div>
       </template>
     </Dialog>
 
-    <!-- Dialog Detail -->
-    <Dialog
-      v-model:visible="showDetailDialog"
-      header="Detail Penilaian Kinerja"
-      :style="{ width: '450px' }"
-      modal
-    >
-      <div class="detail-item">
-        <span class="detail-label">NIP:</span>
-        <span class="detail-value">{{ detailData?.pegawai?.nip || '-' }}</span>
-      </div>
-      <div class="detail-item">
-        <span class="detail-label">Nama Pegawai:</span>
-        <span class="detail-value">{{ detailData?.pegawai?.nama || '-' }}</span>
-      </div>
-      <div class="detail-item">
-        <span class="detail-label">Tahun:</span>
-        <span class="detail-value">{{ detailData?.tahun || '-' }}</span>
-      </div>
-      <div class="detail-item">
-        <span class="detail-label">Periode:</span>
-        <span class="detail-value">{{ detailData?.periode || '-' }}</span>
-      </div>
-      <div class="detail-item">
-        <span class="detail-label">Nilai:</span>
-        <span class="detail-value">{{ detailData?.nilai }} ({{ getKategoriNilai(detailData?.nilai) }})</span>
-      </div>
-      <div class="detail-item">
-        <span class="detail-label">Penilai:</span>
-        <span class="detail-value">{{ detailData?.penilai || '-' }}</span>
-      </div>
-      <div class="detail-item">
-        <span class="detail-label">Komentar:</span>
-        <span class="detail-value">{{ detailData?.komentar || '-' }}</span>
-      </div>
-      <div class="detail-item">
-        <span class="detail-label">Rekomendasi:</span>
-        <span class="detail-value">{{ detailData?.rekomendasi || '-' }}</span>
-      </div>
-      <template #footer>
-        <Button label="Tutup" @click="showDetailDialog = false" />
-      </template>
-    </Dialog>
-
-    <!-- Konfirmasi Hapus -->
-    <Dialog
-      v-model:visible="deleteDialog"
-      header="Konfirmasi Hapus"
-      :style="{ width: '400px' }"
-      modal
-    >
-      <div class="flex align-items-center gap-3">
-        <i class="pi pi-exclamation-triangle text-3xl text-warning"></i>
-        <span>Yakin ingin menghapus penilaian <strong>{{ selectedItem?.pegawai?.nama }}</strong>?</span>
-      </div>
-      <template #footer>
-        <Button label="Batal" severity="secondary" outlined @click="deleteDialog = false" />
-        <Button label="Hapus" severity="danger" @click="deleteData" :loading="deleting" />
-      </template>
+    <Dialog v-model:visible="showDetailDialog" header="DETAIL PERFORMANCE" :style="{ width: '450px' }" :pt="dialogPT" modal>
+       <div class="flex flex-col gap-4 py-6" v-if="detailData">
+          <div v-for="(val, label) in detailViewMapping" :key="label" class="flex justify-between items-center border-b border-zinc-50 pb-3">
+             <span class="text-[9px] font-bold text-zinc-400 uppercase tracking-widest">{{ label }}</span>
+             <span class="text-xs font-black text-zinc-800 uppercase">{{ val }}</span>
+          </div>
+       </div>
     </Dialog>
   </div>
 </template>
@@ -254,6 +151,8 @@
 import { ref, onMounted, computed } from 'vue';
 import { useToast } from 'primevue/usetoast';
 import { supabase } from '@/lib/supabase';
+
+// PrimeVue
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
 import InputText from 'primevue/inputtext';
@@ -262,164 +161,123 @@ import Select from 'primevue/select';
 import Textarea from 'primevue/textarea';
 import Button from 'primevue/button';
 import Dialog from 'primevue/dialog';
+import Tag from 'primevue/tag';
 import InputGroup from 'primevue/inputgroup';
 import InputGroupAddon from 'primevue/inputgroupaddon';
-import Tag from 'primevue/tag';
 
 const toast = useToast();
 
-// State
+// ZINC PASSTHROUGH STYLING
+const tablePT = {
+  root: { class: 'border border-zinc-200 rounded-2xl overflow-hidden shadow-sm bg-white' },
+  thead: { class: 'bg-zinc-50 border-b border-zinc-200' },
+  headerCell: { class: 'p-5 text-[10px] font-black text-zinc-400 uppercase tracking-widest' },
+  bodyRow: { class: 'hover:bg-zinc-50/50 transition-all border-b border-zinc-50 last:border-0' },
+  rowCell: { class: 'p-5 text-xs font-medium' }
+};
+
+const dialogPT = {
+  root: { class: 'border border-zinc-200 bg-white rounded-[2rem] shadow-2xl overflow-hidden' },
+  header: { class: 'p-8 pb-0 border-b-0 text-base font-black uppercase tracking-tighter' },
+  content: { class: 'px-8' },
+  footer: { class: 'p-8' }
+};
+
+const tagPT = (nilai) => ({
+  root: { 
+    class: `text-[9px] font-black uppercase px-2 py-1 rounded-md border ${
+      nilai >= 80 ? 'bg-emerald-50 border-emerald-100 text-emerald-700' : 
+      nilai >= 70 ? 'bg-amber-50 border-amber-100 text-amber-700' : 
+      'bg-zinc-50 border-zinc-100 text-zinc-700'
+    }`
+  }
+});
+
+// LOGIC & STATE
 const items = ref([]);
 const loading = ref(false);
 const submitting = ref(false);
-const deleting = ref(false);
 const showDialog = ref(false);
 const showDetailDialog = ref(false);
-const deleteDialog = ref(false);
 const isEditing = ref(false);
-const selectedItem = ref(null);
+const searchQuery = ref('');
+const filterTahun = ref(new Date().getFullYear());
+const filterRangeNilai = ref(null);
+const pegawaiOptions = ref([]);
+const selectedId = ref(null);
 const detailData = ref(null);
+
 const form = ref({
   pegawai_id: null,
-  tahun: null,
+  tahun: new Date().getFullYear(),
   periode: '',
   nilai: null,
   penilai: '',
   komentar: '',
   rekomendasi: ''
 });
-const errors = ref({});
 
-// Filter
-const searchQuery = ref('');
-const filterTahun = ref(null);
-const filterRangeNilai = ref(null);
-const pegawaiOptions = ref([]);
-const rangeNilaiOptions = ref([
-  { label: '90-100 (Sangat Baik)', value: '90-100' },
-  { label: '80-89 (Baik)', value: '80-89' },
-  { label: '70-79 (Cukup)', value: '70-79' },
-  { label: '60-69 (Kurang)', value: '60-69' },
-  { label: '< 60 (Buruk)', value: '0-59' }
-]);
+const rangeNilaiOptions = [
+  { label: 'Sangat Baik (90-100)', value: '90-100' },
+  { label: 'Baik (80-89)', value: '80-89' },
+  { label: 'Cukup (70-79)', value: '70-79' },
+  { label: 'Kurang (<70)', value: '0-69' }
+];
 
-// Statistik
-const stats = computed(() => {
-  const total = items.value.length;
-  const sangatBaik = items.value.filter(i => i.nilai >= 90).length;
-  const baik = items.value.filter(i => i.nilai >= 80 && i.nilai < 90).length;
-  const cukup = items.value.filter(i => i.nilai >= 70 && i.nilai < 80).length;
-  return { total, sangatBaik, baik, cukup };
-});
-
-// Helper
-const getKategoriNilai = (nilai) => {
-  if (nilai >= 90) return 'Sangat Baik';
-  if (nilai >= 80) return 'Baik';
-  if (nilai >= 70) return 'Cukup';
-  if (nilai >= 60) return 'Kurang';
-  return 'Buruk';
+const getKategoriNilai = (n) => {
+  if (n >= 90) return 'Sangat Baik';
+  if (n >= 80) return 'Baik';
+  if (n >= 70) return 'Cukup';
+  return 'Kurang';
 };
 
-const getSeverityNilai = (nilai) => {
-  if (nilai >= 90) return 'success';
-  if (nilai >= 80) return 'info';
-  if (nilai >= 70) return 'warning';
-  return 'danger';
-};
-
-// Fetch pegawai options
-const loadPegawaiOptions = async () => {
-  const { data, error } = await supabase
-    .from('pegawai')
-    .select('id, nama, nip')
-    .order('nama');
-  if (!error) {
-    pegawaiOptions.value = data.map(p => ({
-      label: `${p.nip} - ${p.nama}`,
-      value: p.id
-    }));
-  }
-};
-
-// Load data
 const loadData = async () => {
   loading.value = true;
   try {
-    let query = supabase
-      .from('penilaian_kinerja')
-      .select('*, pegawai(id, nip, nama)')
-      .order('tahun', { ascending: false });
+    let query = supabase.from('penilaian_kinerja').select('*, pegawai(id, nip, nama)');
+    if (filterTahun.value) query = query.eq('tahun', filterTahun.value);
+    
+    const { data } = await query.order('tahun', { ascending: false });
+    items.value = data || [];
 
-    if (filterTahun.value) {
-      query = query.eq('tahun', filterTahun.value);
-    }
-    if (filterRangeNilai.value) {
-      const [min, max] = filterRangeNilai.value.split('-').map(Number);
-      if (max) {
-        query = query.gte('nilai', min).lte('nilai', max);
-      } else if (filterRangeNilai.value === '0-59') {
-        query = query.lte('nilai', 59);
-      }
-    }
-
-    const { data, error } = await query;
-    if (error) throw error;
-
-    let filtered = data || [];
-    if (searchQuery.value) {
-      const term = searchQuery.value.toLowerCase();
-      filtered = filtered.filter(item =>
-        item.pegawai?.nip?.toLowerCase().includes(term) ||
-        item.pegawai?.nama?.toLowerCase().includes(term)
-      );
-    }
-    items.value = filtered;
-  } catch (err) {
-    console.error(err);
-    toast.add({ severity: 'error', summary: 'Gagal', detail: err.message, life: 3000 });
+    const { data: pData } = await supabase.from('pegawai').select('id, nip, nama').order('nama');
+    pegawaiOptions.value = pData?.map(p => ({ label: `${p.nip} - ${p.nama}`, value: p.id })) || [];
   } finally {
     loading.value = false;
   }
 };
 
-const applyFilters = () => loadData();
-const resetFilters = () => {
-  searchQuery.value = '';
-  filterTahun.value = null;
-  filterRangeNilai.value = null;
-  loadData();
+const saveData = async () => {
+  if (!form.value.pegawai_id || !form.value.nilai) {
+    toast.add({ severity: 'warn', summary: 'Input Error', detail: 'Lengkapi data wajib!' });
+    return;
+  }
+  submitting.value = true;
+  try {
+    if (isEditing.value) {
+      await supabase.from('penilaian_kinerja').update(form.value).eq('id', selectedId.value);
+    } else {
+      await supabase.from('penilaian_kinerja').insert([form.value]);
+    }
+    showDialog.value = false;
+    await loadData();
+    toast.add({ severity: 'success', summary: 'Berhasil', detail: 'Data kinerja disimpan' });
+  } finally {
+    submitting.value = false;
+  }
 };
 
-// CRUD
 const openCreateModal = () => {
   isEditing.value = false;
-  form.value = {
-    pegawai_id: null,
-    tahun: null,
-    periode: '',
-    nilai: null,
-    penilai: '',
-    komentar: '',
-    rekomendasi: ''
-  };
-  errors.value = {};
+  form.value = { pegawai_id: null, tahun: new Date().getFullYear(), periode: '', nilai: null, penilai: '', komentar: '', rekomendasi: '' };
   showDialog.value = true;
 };
 
-const openEditModal = (row) => {
+const openEditModal = (data) => {
   isEditing.value = true;
-  selectedItem.value = row;
-  form.value = {
-    pegawai_id: row.pegawai_id,
-    tahun: row.tahun,
-    periode: row.periode || '',
-    nilai: row.nilai,
-    penilai: row.penilai || '',
-    komentar: row.komentar || '',
-    rekomendasi: row.rekomendasi || ''
-  };
-  errors.value = {};
+  selectedId.value = data.id;
+  form.value = { ...data };
+  delete form.value.pegawai; // Clean relation
   showDialog.value = true;
 };
 
@@ -428,302 +286,36 @@ const viewDetail = (row) => {
   showDetailDialog.value = true;
 };
 
-const closeDialog = () => {
-  showDialog.value = false;
-  selectedItem.value = null;
-};
-
-const validate = () => {
-  errors.value = {};
-  if (!form.value.pegawai_id) errors.value.pegawai_id = 'Pegawai harus dipilih';
-  if (!form.value.tahun) errors.value.tahun = 'Tahun harus diisi';
-  if (form.value.nilai === null || form.value.nilai === undefined) errors.value.nilai = 'Nilai harus diisi';
-  if (form.value.nilai < 0 || form.value.nilai > 100) errors.value.nilai = 'Nilai harus antara 0-100';
-  return Object.keys(errors.value).length === 0;
-};
-
-const saveData = async () => {
-  if (!validate()) return;
-  submitting.value = true;
-  try {
-    const payload = {
-      pegawai_id: form.value.pegawai_id,
-      tahun: form.value.tahun,
-      periode: form.value.periode || null,
-      nilai: form.value.nilai,
-      penilai: form.value.penilai || null,
-      komentar: form.value.komentar || null,
-      rekomendasi: form.value.rekomendasi || null,
-      updated_at: new Date().toISOString()
-    };
-    if (isEditing.value && selectedItem.value) {
-      const { error } = await supabase
-        .from('penilaian_kinerja')
-        .update(payload)
-        .eq('id', selectedItem.value.id);
-      if (error) throw error;
-      toast.add({ severity: 'success', summary: 'Berhasil', detail: 'Penilaian diperbarui', life: 3000 });
-    } else {
-      const { error } = await supabase
-        .from('penilaian_kinerja')
-        .insert([{ ...payload, created_at: new Date().toISOString() }]);
-      if (error) throw error;
-      toast.add({ severity: 'success', summary: 'Berhasil', detail: 'Penilaian ditambahkan', life: 3000 });
-    }
-    closeDialog();
-    await loadData();
-  } catch (err) {
-    toast.add({ severity: 'error', summary: 'Gagal', detail: err.message, life: 3000 });
-  } finally {
-    submitting.value = false;
+const confirmDelete = async (data) => {
+  if (confirm(`Hapus penilaian ${data.pegawai?.nama}?`)) {
+    await supabase.from('penilaian_kinerja').delete().eq('id', data.id);
+    loadData();
   }
 };
 
-const confirmDelete = (row) => {
-  selectedItem.value = row;
-  deleteDialog.value = true;
-};
-
-const deleteData = async () => {
-  if (!selectedItem.value) return;
-  deleting.value = true;
-  try {
-    const { error } = await supabase
-      .from('penilaian_kinerja')
-      .delete()
-      .eq('id', selectedItem.value.id);
-    if (error) throw error;
-    toast.add({ severity: 'success', summary: 'Berhasil', detail: 'Penilaian dihapus', life: 3000 });
-    deleteDialog.value = false;
-    await loadData();
-  } catch (err) {
-    toast.add({ severity: 'error', summary: 'Gagal', detail: err.message, life: 3000 });
-  } finally {
-    deleting.value = false;
-    selectedItem.value = null;
-  }
-};
-
-onMounted(async () => {
-  await loadPegawaiOptions();
-  await loadData();
+const filteredItems = computed(() => {
+  if (!searchQuery.value) return items.value;
+  const q = searchQuery.value.toLowerCase();
+  return items.value.filter(i => i.pegawai?.nama?.toLowerCase().includes(q) || i.pegawai?.nip?.includes(q));
 });
+
+const statsSummary = computed(() => ({
+  'Total Review': items.value.length,
+  'Avg Score': items.value.length ? (items.value.reduce((a, b) => a + b.nilai, 0) / items.value.length).toFixed(1) : 0,
+  'High Performer': items.value.filter(i => i.nilai >= 90).length
+}));
+
+const detailViewMapping = computed(() => {
+  if (!detailData.value) return {};
+  return {
+    'Pegawai': detailData.value.pegawai?.nama,
+    'Tahun': detailData.value.tahun,
+    'Periode': detailData.value.periode,
+    'Nilai': detailData.value.nilai,
+    'Predikat': getKategoriNilai(detailData.value.nilai),
+    'Penilai': detailData.value.penilai
+  };
+});
+
+onMounted(loadData);
 </script>
-
-<style scoped>
-.kinerja-page {
-  min-height: 100vh;
-  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
-  padding: 1.5rem 0;
-}
-
-.kinerja-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 1rem;
-  background: white;
-  border-radius: 1rem;
-  padding: 1.25rem 1.5rem;
-  margin-bottom: 1.5rem;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
-  border: 1px solid #e2e8f0;
-}
-
-.kinerja-header-content {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-}
-
-.kinerja-header-icon {
-  width: 3rem;
-  height: 3rem;
-  border-radius: 0.75rem;
-  background: linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%);
-  color: white;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1.5rem;
-}
-
-.kinerja-title {
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: #0f172a;
-  margin: 0;
-}
-
-.kinerja-subtitle {
-  font-size: 0.875rem;
-  color: #64748b;
-  margin: 0.25rem 0 0;
-}
-
-.kinerja-header-actions {
-  display: flex;
-  gap: 0.5rem;
-  align-items: center;
-  flex-wrap: wrap;
-}
-
-.search-input {
-  min-width: 250px;
-}
-
-.btn-primary {
-  font-weight: 600;
-}
-
-.kinerja-filters {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 1rem;
-  background: white;
-  border-radius: 1rem;
-  padding: 1rem 1.5rem;
-  margin-bottom: 1.5rem;
-  border: 1px solid #e2e8f0;
-  align-items: flex-end;
-}
-
-.filter-item {
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-}
-
-.filter-item label {
-  font-size: 0.75rem;
-  font-weight: 600;
-  color: #475569;
-}
-
-.stats-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-  gap: 1rem;
-  margin-bottom: 1.5rem;
-}
-
-.stat-card {
-  background: white;
-  border-radius: 0.75rem;
-  padding: 1rem;
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-  border: 1px solid #e2e8f0;
-}
-
-.stat-icon {
-  width: 3rem;
-  height: 3rem;
-  border-radius: 0.75rem;
-  background: rgba(139,92,246,0.1);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1.5rem;
-}
-
-.stat-info {
-  flex: 1;
-}
-
-.stat-label {
-  font-size: 0.75rem;
-  font-weight: 500;
-  color: #475569;
-  display: block;
-}
-
-.stat-value {
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: #0f172a;
-}
-
-.kinerja-table-wrap {
-  background: white;
-  border-radius: 1rem;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
-  border: 1px solid #e2e8f0;
-  overflow: hidden;
-  padding: 1rem;
-}
-
-.kinerja-datatable {
-  width: 100%;
-}
-
-.kinerja-datatable :deep(.p-datatable-thead > tr > th) {
-  background: #f8fafc;
-  font-weight: 600;
-  font-size: 0.8125rem;
-  padding: 0.75rem 1rem;
-}
-
-.kinerja-datatable :deep(.p-datatable-tbody > tr > td) {
-  padding: 0.75rem 1rem;
-}
-
-.kinerja-datatable :deep(.p-datatable-tbody > tr:hover) {
-  background: #f8fafc;
-}
-
-.field {
-  margin-bottom: 1.25rem;
-}
-
-.field label {
-  display: block;
-  font-weight: 600;
-  font-size: 0.85rem;
-  margin-bottom: 0.5rem;
-  color: #334155;
-}
-
-.p-error {
-  color: #ef4444;
-  font-size: 0.75rem;
-  display: block;
-  margin-top: 0.25rem;
-}
-
-.detail-item {
-  display: flex;
-  margin-bottom: 0.75rem;
-}
-
-.detail-label {
-  width: 110px;
-  font-weight: 600;
-  color: #475569;
-}
-
-.detail-value {
-  flex: 1;
-  color: #0f172a;
-}
-
-@media (max-width: 640px) {
-  .kinerja-page {
-    padding: 1rem;
-  }
-  .kinerja-header {
-    flex-direction: column;
-    align-items: stretch;
-  }
-  .search-input {
-    width: 100%;
-  }
-  .kinerja-filters {
-    flex-direction: column;
-    align-items: stretch;
-  }
-}
-</style>

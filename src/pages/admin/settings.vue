@@ -1,127 +1,174 @@
 <template>
-  <div class="settings-page">
-    <!-- Header -->
-    <div class="settings-header">
-      <div class="settings-header-content">
-        <div class="settings-header-icon">
-          <i class="pi pi-cog"></i>
+  <div class="w-full mx-auto p-6 md:p-10 flex flex-col gap-8 antialiased">
+    
+    <div class="bg-white dark:bg-zinc-900 p-8 rounded-2xl border border-zinc-200/60 dark:border-zinc-800/60 shadow-sm flex flex-col gap-8">
+      <div class="flex flex-col md:flex-row md:items-end justify-between gap-6">
+        <div class="flex items-start gap-5">
+          <div class="w-14 h-14 rounded-2xl bg-zinc-950 text-white flex items-center justify-center shrink-0 shadow-xl shadow-zinc-500/20">
+            <i class="pi pi-cog text-xl"></i>
+          </div>
+          <div>
+            <div class="flex items-center gap-2 text-[10px] font-black tracking-[0.2em] text-zinc-400 dark:text-zinc-500 uppercase mb-2">
+              <span class="w-1.5 h-1.5 rounded-full bg-blue-500"></span> System Core Preferences
+            </div>
+            <h1 class="text-2xl font-bold tracking-tight text-zinc-900 dark:text-white m-0 uppercase">Konfigurasi Sistem</h1>
+            <p class="text-xs text-zinc-400 dark:text-zinc-500 m-0 mt-2 max-w-2xl leading-relaxed font-medium">
+              Kendalikan parameter global, protokol keamanan, dan integrasi layanan cloud aplikasi Anda.
+            </p>
+          </div>
         </div>
-        <div>
-          <h1 class="settings-title">Konfigurasi Sistem</h1>
-          <p class="settings-subtitle">Kelola pengaturan umum aplikasi</p>
+        <div class="flex gap-3">
+          <Button icon="pi pi-sync" class="p-4 bg-zinc-100 text-zinc-600 border-0 rounded-xl hover:bg-zinc-200 transition-all" @click="loadData" :loading="loading" />
+          <Button label="Simpan Perubahan" icon="pi pi-save" class="text-[11px] font-black bg-zinc-950 text-white px-8 py-4 rounded-xl border-0 shadow-lg uppercase tracking-widest" @click="saveSettings" :loading="saving" />
         </div>
-      </div>
-      <div class="settings-header-actions">
-        <Button icon="pi pi-refresh" severity="secondary" @click="loadData" :loading="loading" />
-        <Button label="Simpan Perubahan" icon="pi pi-save" @click="saveSettings" :loading="saving" />
       </div>
     </div>
 
-    <div class="settings-grid">
-      <!-- Pengaturan Umum -->
-      <div class="settings-card">
-        <div class="settings-card-header">
-          <div class="settings-card-icon">
-            <i class="pi pi-building"></i>
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+      
+      <div class="bg-white dark:bg-zinc-900 p-8 rounded-2xl border border-zinc-200/60 shadow-sm flex flex-col gap-6">
+        <div class="flex items-center gap-4 mb-2">
+          <div class="w-10 h-10 rounded-xl bg-zinc-100 dark:bg-zinc-800 text-zinc-600 flex items-center justify-center">
+            <i class="pi pi-building text-sm"></i>
           </div>
-          <h3>Pengaturan Umum</h3>
+          <h3 class="text-[11px] font-black text-zinc-900 dark:text-white uppercase tracking-[0.2em]">Pengaturan Instansi</h3>
         </div>
-        <div class="field">
-          <label>Nama Aplikasi</label>
-          <InputText v-model="settings.app_name" />
-        </div>
-        <div class="field">
-          <label>Nama Organisasi</label>
-          <InputText v-model="settings.organization" />
-        </div>
-        <div class="field">
-          <label>Email Admin</label>
-          <InputText v-model="settings.admin_email" type="email" />
-        </div>
-        <div class="field">
-          <label>No. Telepon Admin</label>
-          <InputText v-model="settings.admin_phone" />
+
+        <div class="flex flex-col gap-5">
+          <div class="flex flex-col gap-2">
+            <label class="text-[10px] font-black text-zinc-400 uppercase tracking-widest">Nama Aplikasi</label>
+            <InputText v-model="settings.app_name" class="w-full text-xs p-4 border-zinc-200 rounded-xl bg-zinc-50/50" />
+          </div>
+          <div class="flex flex-col gap-2">
+            <label class="text-[10px] font-black text-zinc-400 uppercase tracking-widest">Nama Organisasi</label>
+            <InputText v-model="settings.organization" class="w-full text-xs p-4 border-zinc-200 rounded-xl bg-zinc-50/50" />
+          </div>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="flex flex-col gap-2">
+              <label class="text-[10px] font-black text-zinc-400 uppercase tracking-widest">Email Admin</label>
+              <InputText v-model="settings.admin_email" class="w-full text-xs p-4 border-zinc-200 rounded-xl" />
+            </div>
+            <div class="flex flex-col gap-2">
+              <label class="text-[10px] font-black text-zinc-400 uppercase tracking-widest">Phone Support</label>
+              <InputText v-model="settings.admin_phone" class="w-full text-xs p-4 border-zinc-200 rounded-xl" />
+            </div>
+          </div>
         </div>
       </div>
 
-      <!-- Pengaturan Keamanan -->
-      <div class="settings-card">
-        <div class="settings-card-header">
-          <div class="settings-card-icon">
-            <i class="pi pi-shield"></i>
+      <div class="bg-white dark:bg-zinc-900 p-8 rounded-2xl border border-zinc-200/60 shadow-sm flex flex-col gap-6">
+        <div class="flex items-center gap-4 mb-2">
+          <div class="w-10 h-10 rounded-xl bg-red-50 text-red-500 flex items-center justify-center">
+            <i class="pi pi-shield text-sm"></i>
           </div>
-          <h3>Pengaturan Keamanan</h3>
+          <h3 class="text-[11px] font-black text-zinc-900 dark:text-white uppercase tracking-[0.2em]">Keamanan & Akses</h3>
         </div>
-        <div class="field">
-          <label>Timeout Sesi (menit)</label>
-          <InputNumber v-model="settings.session_timeout" :min="5" :max="480" />
-        </div>
-        <div class="field">
-          <label>Maksimal Percobaan Login</label>
-          <InputNumber v-model="settings.max_login_attempts" :min="3" :max="10" />
-        </div>
-        <div class="field-checkbox">
-          <Checkbox v-model="settings.require_password_change" binary />
-          <label>Wajib Ganti Password Setiap 90 Hari</label>
-        </div>
-        <div class="field-checkbox">
-          <Checkbox v-model="settings.enable_two_factor" binary />
-          <label>Aktifkan Two-Factor Authentication</label>
+
+        <div class="flex flex-col gap-6">
+          <div class="grid grid-cols-2 gap-4">
+            <div class="flex flex-col gap-2">
+              <label class="text-[10px] font-black text-zinc-400 uppercase tracking-widest">Session Timeout (Min)</label>
+              <InputNumber v-model="settings.session_timeout" showButtons buttonLayout="horizontal" class="text-xs" inputClass="p-4 text-center border-zinc-200" />
+            </div>
+            <div class="flex flex-col gap-2">
+              <label class="text-[10px] font-black text-zinc-400 uppercase tracking-widest">Max Login Attempts</label>
+              <InputNumber v-model="settings.max_login_attempts" class="text-xs" inputClass="p-4 border-zinc-200 rounded-xl" />
+            </div>
+          </div>
+
+          <div class="space-y-4 pt-2">
+            <div class="flex items-center justify-between p-4 bg-zinc-50 dark:bg-zinc-800/50 rounded-xl border border-zinc-100 dark:border-zinc-800">
+              <div class="flex flex-col gap-1">
+                <span class="text-xs font-bold text-zinc-800 dark:text-zinc-200">Wajib Ganti Password</span>
+                <span class="text-[10px] text-zinc-400 font-medium italic">Paksa pengguna ganti password setiap 90 hari</span>
+              </div>
+              <Checkbox v-model="settings.require_password_change" :binary="true" />
+            </div>
+            <div class="flex items-center justify-between p-4 bg-zinc-50 dark:bg-zinc-800/50 rounded-xl border border-zinc-100 dark:border-zinc-800">
+              <div class="flex flex-col gap-1">
+                <span class="text-xs font-bold text-zinc-800 dark:text-zinc-200">Two-Factor Authentication</span>
+                <span class="text-[10px] text-zinc-400 font-medium italic">Gunakan kode OTP untuk login administrator</span>
+              </div>
+              <Checkbox v-model="settings.enable_two_factor" :binary="true" />
+            </div>
+          </div>
         </div>
       </div>
 
-      <!-- Pengaturan Notifikasi -->
-      <div class="settings-card">
-        <div class="settings-card-header">
-          <div class="settings-card-icon">
-            <i class="pi pi-envelope"></i>
+      <div class="bg-white dark:bg-zinc-900 p-8 rounded-2xl border border-zinc-200/60 shadow-sm flex flex-col gap-6">
+        <div class="flex items-center gap-4 mb-2">
+          <div class="w-10 h-10 rounded-xl bg-zinc-100 text-zinc-600 flex items-center justify-center">
+            <i class="pi pi-envelope text-sm"></i>
           </div>
-          <h3>Pengaturan Notifikasi</h3>
+          <h3 class="text-[11px] font-black text-zinc-900 dark:text-white uppercase tracking-[0.2em]">Mail Server (SMTP)</h3>
         </div>
-        <div class="field-checkbox">
-          <Checkbox v-model="settings.email_notifications" binary />
-          <label>Aktifkan Notifikasi Email</label>
-        </div>
-        <div class="field-checkbox">
-          <Checkbox v-model="settings.sms_notifications" binary />
-          <label>Aktifkan Notifikasi SMS</label>
-        </div>
-        <div class="field">
-          <label>SMTP Host</label>
-          <InputText v-model="settings.smtp_host" />
-        </div>
-        <div class="field">
-          <label>SMTP Port</label>
-          <InputNumber v-model="settings.smtp_port" :min="1" :max="65535" />
+
+        <div class="flex flex-col gap-5">
+          <div class="flex gap-4 mb-2">
+            <div class="flex items-center gap-2 px-4 py-2 bg-zinc-100 rounded-full">
+              <Checkbox v-model="settings.email_notifications" :binary="true" />
+              <span class="text-[10px] font-black uppercase text-zinc-600">Email Aktif</span>
+            </div>
+            <div class="flex items-center gap-2 px-4 py-2 bg-zinc-100 rounded-full">
+              <Checkbox v-model="settings.sms_notifications" :binary="true" />
+              <span class="text-[10px] font-black uppercase text-zinc-600">SMS Aktif</span>
+            </div>
+          </div>
+          <div class="flex flex-col gap-2">
+            <label class="text-[10px] font-black text-zinc-400 uppercase tracking-widest">SMTP Host</label>
+            <InputText v-model="settings.smtp_host" placeholder="smtp.provider.com" class="w-full text-xs p-4 border-zinc-200 rounded-xl" />
+          </div>
+          <div class="flex flex-col gap-2">
+            <label class="text-[10px] font-black text-zinc-400 uppercase tracking-widest">SMTP Port</label>
+            <InputNumber v-model="settings.smtp_port" class="w-full" inputClass="p-4 text-xs border-zinc-200 rounded-xl" />
+          </div>
         </div>
       </div>
 
-      <!-- Pengaturan Backup -->
-      <div class="settings-card">
-        <div class="settings-card-header">
-          <div class="settings-card-icon">
-            <i class="pi pi-database"></i>
+      <div class="bg-white dark:bg-zinc-900 p-8 rounded-2xl border border-zinc-200/60 shadow-sm flex flex-col gap-6 text-zinc-900">
+        <div class="flex items-center gap-4 mb-2">
+          <div class="w-10 h-10 rounded-xl bg-blue-50 text-blue-500 flex items-center justify-center">
+            <i class="pi pi-database text-sm"></i>
           </div>
-          <h3>Pengaturan Backup</h3>
+          <h3 class="text-[11px] font-black text-zinc-900 dark:text-white uppercase tracking-[0.2em]">Backup & Storage</h3>
         </div>
-        <div class="field-checkbox">
-          <Checkbox v-model="settings.auto_backup" binary />
-          <label>Aktifkan Backup Otomatis</label>
-        </div>
-        <div class="field">
-          <label>Frekuensi Backup</label>
-          <Select v-model="settings.backup_frequency" :options="backupOptions" optionLabel="label" optionValue="value" placeholder="Pilih frekuensi" />
-        </div>
-        <div class="field">
-          <label>Retensi Backup (hari)</label>
-          <InputNumber v-model="settings.backup_retention" :min="1" :max="365" />
-        </div>
-        <div class="field">
-          <label>Lokasi Backup</label>
-          <InputText v-model="settings.backup_location" />
+
+        <div class="flex flex-col gap-6">
+          <div class="flex items-center gap-3">
+             <Checkbox v-model="settings.auto_backup" :binary="true" />
+             <span class="text-xs font-bold text-zinc-700">Aktifkan Backup Database Otomatis</span>
+          </div>
+
+          <div class="grid grid-cols-2 gap-4">
+            <div class="flex flex-col gap-2">
+              <label class="text-[10px] font-black text-zinc-400 uppercase tracking-widest">Frekuensi</label>
+              <Select v-model="settings.backup_frequency" :options="backupOptions" optionLabel="label" optionValue="value" class="text-xs h-12 flex items-center px-2 border-zinc-200" />
+            </div>
+            <div class="flex flex-col gap-2">
+              <label class="text-[10px] font-black text-zinc-400 uppercase tracking-widest">Retensi (Hari)</label>
+              <InputNumber v-model="settings.backup_retention" inputClass="p-4 text-xs border-zinc-200 rounded-xl" />
+            </div>
+          </div>
+
+          <div class="flex flex-col gap-2">
+            <label class="text-[10px] font-black text-zinc-400 uppercase tracking-widest">S3 Bucket / Local Path</label>
+            <div class="flex gap-2">
+              <InputText v-model="settings.backup_location" class="flex-1 text-xs p-4 border-zinc-200 rounded-xl bg-zinc-50" />
+              <Button icon="pi pi-folder-open" severity="secondary" outlined class="rounded-xl px-4" />
+            </div>
+          </div>
         </div>
       </div>
     </div>
+
+    <div class="flex justify-center p-8 opacity-50">
+      <div class="flex items-center gap-4 text-[10px] font-black text-zinc-400 uppercase tracking-[0.3em]">
+        <span>Simpeg Engine v4.2.0</span>
+        <span class="w-1 h-1 bg-zinc-300 rounded-full"></span>
+        <span>Runtime Status: Stable</span>
+      </div>
+    </div>
+
   </div>
 </template>
 
@@ -129,6 +176,8 @@
 import { ref, onMounted } from 'vue';
 import { useToast } from 'primevue/usetoast';
 import { supabase } from '@/lib/supabase';
+
+// PrimeVue Components
 import InputText from 'primevue/inputtext';
 import InputNumber from 'primevue/inputnumber';
 import Checkbox from 'primevue/checkbox';
@@ -140,32 +189,34 @@ const toast = useToast();
 // State
 const loading = ref(false);
 const saving = ref(false);
+
 const settings = ref({
-  app_name: 'SIMPEG',
-  organization: 'Kementerian Agama Kab. Biak Numfor',
-  admin_email: 'admin@biako.kemenag.go.id',
+  app_name: '',
+  organization: '',
+  admin_email: '',
   admin_phone: '',
   session_timeout: 30,
   max_login_attempts: 5,
-  require_password_change: true,
+  require_password_change: false,
   enable_two_factor: false,
-  email_notifications: true,
+  email_notifications: false,
   sms_notifications: false,
-  smtp_host: 'smtp.gmail.com',
-  smtp_port: 587,
-  auto_backup: true,
+  smtp_host: '',
+  smtp_port: null,
+  auto_backup: false,
   backup_frequency: 'daily',
   backup_retention: 30,
-  backup_location: '/backup'
+  backup_location: ''
 });
 
-const backupOptions = ref([
-  { label: 'Harian', value: 'daily' },
+const backupOptions = [
+  { label: 'Setiap Jam', value: 'hourly' },
+  { label: 'Harian (00:00)', value: 'daily' },
   { label: 'Mingguan', value: 'weekly' },
   { label: 'Bulanan', value: 'monthly' }
-]);
+];
 
-// Load data
+// Logic: Load Data
 const loadData = async () => {
   loading.value = true;
   try {
@@ -173,29 +224,40 @@ const loadData = async () => {
       .from('system_settings')
       .select('*')
       .single();
-    if (error) throw error;
-    if (data) settings.value = data;
+    
+    if (error && error.code !== 'PGRST116') throw error; // PGRST116 is "No rows found"
+    
+    if (data) {
+      settings.value = { ...settings.value, ...data };
+    }
   } catch (err) {
-    console.error(err);
-    toast.add({ severity: 'error', summary: 'Gagal', detail: err.message, life: 3000 });
+    toast.add({ severity: 'error', summary: 'System Error', detail: 'Gagal sinkronisasi data pengaturan', life: 3000 });
   } finally {
     loading.value = false;
   }
 };
 
-// Save data
+// Logic: Save Data
 const saveSettings = async () => {
   saving.value = true;
   try {
+    // Note: We use ID 1 as the single record for settings
     const { error } = await supabase
       .from('system_settings')
-      .upsert({ id: 1, ...settings.value }, { onConflict: 'id' });
+      .upsert({ id: 1, ...settings.value, updated_at: new Date() });
+
     if (error) throw error;
-    toast.add({ severity: 'success', summary: 'Berhasil', detail: 'Pengaturan disimpan', life: 3000 });
+    
+    toast.add({ 
+      severity: 'success', 
+      summary: 'Konfigurasi Terupdate', 
+      detail: 'Parameter sistem berhasil diterapkan secara global', 
+      life: 3000 
+    });
   } catch (err) {
-    console.error(err);
-    toast.add({ severity: 'error', summary: 'Gagal', detail: err.message, life: 3000 });
+    toast.add({ severity: 'error', summary: 'Update Gagal', detail: err.message, life: 3000 });
   } finally {
+    savingSchedule(); // Placeholder for any side effects
     saving.value = false;
   }
 };
@@ -206,127 +268,19 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.settings-page {
-  min-height: 100vh;
-  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
-  padding: 1.5rem;
+/* Transisi halus saat hover pada card */
+.grid > div {
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.settings-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 1rem;
-  background: white;
-  border-radius: 1rem;
-  padding: 1.25rem 1.5rem;
-  margin-bottom: 1.5rem;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
-  border: 1px solid #e2e8f0;
+.grid > div:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.05);
+  border-color: var(--zinc-300);
 }
 
-.settings-header-content {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-}
-
-.settings-header-icon {
-  width: 3rem;
-  height: 3rem;
-  border-radius: 0.75rem;
-  background: linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%);
-  color: white;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1.5rem;
-}
-
-.settings-title {
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: #0f172a;
-  margin: 0;
-}
-
-.settings-subtitle {
-  font-size: 0.875rem;
-  color: #64748b;
-  margin: 0.25rem 0 0;
-}
-
-.settings-header-actions {
-  display: flex;
-  gap: 0.5rem;
-}
-
-.settings-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-  gap: 1.5rem;
-}
-
-.settings-card {
-  background: white;
-  border-radius: 1rem;
-  border: 1px solid #e2e8f0;
-  padding: 1.5rem;
-  transition: box-shadow 0.2s;
-}
-.settings-card:hover {
-  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-}
-
-.settings-card-header {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  margin-bottom: 1.25rem;
-  padding-bottom: 0.75rem;
-  border-bottom: 1px solid #e2e8f0;
-}
-.settings-card-icon {
-  width: 2.5rem;
-  height: 2.5rem;
-  border-radius: 0.75rem;
-  background: rgba(139,92,246,0.1);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #8b5cf6;
-  font-size: 1.2rem;
-}
-.settings-card h3 {
-  font-size: 1.1rem;
-  font-weight: 600;
-  margin: 0;
-}
-
-.field {
-  margin-bottom: 1rem;
-}
-.field label {
-  display: block;
-  font-weight: 600;
-  font-size: 0.85rem;
-  margin-bottom: 0.25rem;
-  color: #475569;
-}
-.field-checkbox {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  margin-bottom: 0.75rem;
-}
-.field-checkbox label {
-  font-weight: 500;
-  color: #334155;
-}
-
-@media (max-width: 640px) {
-  .settings-page { padding: 1rem; }
-  .settings-grid { grid-template-columns: 1fr; }
+/* Custom styling untuk input number buttons */
+:deep(.p-inputnumber-button) {
+  @apply bg-zinc-100 border-0 text-zinc-600;
 }
 </style>

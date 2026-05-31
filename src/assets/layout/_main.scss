@@ -1,26 +1,37 @@
+/* ==========================================================================
+   KODE LENGKAP: CSS GLOBAL (FULL WIDTH & PADDING EKSTREM ALL DEVICES)
+   ========================================================================== */
+
 .layout-main-container {
     display: flex;
     flex-direction: column;
     min-height: 100vh;
     justify-content: space-between;
-    padding: 6rem 1rem 0 1rem; /* Kurangi padding kiri/kanan di layar kecil */
     transition: margin-left var(--layout-section-transition-duration);
+    
+    /* PADA CONTAINER INDUK: Paksa padding atas untuk topbar, 
+       namun kunci padding kiri/kanan seminimal mungkin (2px) di semua device */
+    padding: 6rem 2px 0 2px !important; 
 }
 
 .layout-main {
     flex: 1 1 auto;
     padding-bottom: 2rem;
     
-    /* TAMBAHKAN INI UNTUK KONSISTENSI */
-    width: 100%;
-    max-width: 1400px; /* Lebar maksimal yang seragam untuk semua halaman */
-    margin: 0 auto;    /* Memastikan konten selalu berada di tengah */
+    /* PAKSA LEBAR FULL TOTAL TANPA BATASAN MAKSIMAL */
+    width: 100% !important;
+    max-width: none !important; 
+    
+    /* Buang margin auto agar tidak memaksa ke tengah-tengah layar */
+    margin-left: 0 !important;   
+    margin-right: 0 !important;  
+    
+    /* Berikan padding kiri/kanan nol agar menempel penuh ke tepi container */
+    padding-left: 0px !important;  
+    padding-right: 0px !important; 
 }
 
-/* Penyesuaian responsif untuk layar besar */
-@media screen and (min-width: 768px) {
-    .layout-main-container {
-        padding-left: 2rem;
-        padding-right: 2rem;
-    }
-}
+/* CATATAN PERBAIKAN: 
+   Blok "@media screen and (min-width: 768px)" yang lama TELAH DIHAPUS 
+   agar layar tablet dan PC desktop tidak otomatis memperbesar padding-nya kembali.
+*/

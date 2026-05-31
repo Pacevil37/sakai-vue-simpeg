@@ -42,7 +42,7 @@ function bindOutsideClickListener() {
 
 function unbindOutsideClickListener() {
     if (outsideClickListener.value) {
-        document.removeEventListener('click', outsideClickListener);
+        document.removeEventListener('click', outsideClickListener.value);
         outsideClickListener.value = null;
     }
 }
@@ -51,7 +51,7 @@ function isOutsideClicked(event) {
     const sidebarEl = document.querySelector('.layout-sidebar');
     const topbarEl = document.querySelector('.layout-menu-button');
 
-    return !(sidebarEl.isSameNode(event.target) || sidebarEl.contains(event.target) || topbarEl.isSameNode(event.target) || topbarEl.contains(event.target));
+    return !(sidebarEl?.isSameNode(event.target) || sidebarEl?.contains(event.target) || topbarEl?.isSameNode(event.target) || topbarEl?.contains(event.target));
 }
 </script>
 
@@ -60,13 +60,34 @@ function isOutsideClicked(event) {
         <app-topbar></app-topbar>
         <app-sidebar></app-sidebar>
         
-        <div class="layout-main-container">
-            <div class="layout-main mx-auto w-full max-w-[1400px] p-4 md:p-6 lg:p-8">
+        <div class="layout-main-container !px-1">
+            
+            <div class="layout-main !w-full !max-w-none !m-0 pt-4 pb-4 !px-0">
                 <router-view></router-view>
             </div>
+            
             <app-footer></app-footer>
         </div>
         
         <div class="layout-mask animate-fadein"></div>
     </div>
 </template>
+
+<style scoped>
+/* BLOK PENGUNCIAN EKSTREM GLOBAL (ALL DEVICES)
+   Menimpa sistem grid bawaan tema agar tidak menyisakan ruang kosong sedikitpun.
+*/
+:deep(.layout-main-container) {
+    padding-left: 1px !important;   /* Sangat tipis mendekati nol */
+    padding-right: 1px !important;  /* Sangat tipis mendekati nol */
+}
+
+:deep(.layout-main) {
+    width: 100% !important;
+    max-width: none !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+    padding-left: 0px !important;   /* Menempel penuh ke frame */
+    padding-right: 0px !important;  /* Menempel penuh ke frame */
+}
+</style>

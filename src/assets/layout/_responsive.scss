@@ -1,18 +1,49 @@
-@media screen and (min-width: 1960px) {
-    .layout-main,
-    .landing-wrapper {
-        width: 1504px;
-        margin-left: auto !important;
-        margin-right: auto !important;
-    }
+/* ==========================================================================
+   1. ATURAN GLOBAL: MUTLAK LEBAR FULL & PADDING SUPER RAPAT (ALL DEVICES)
+   ========================================================================== */
+.layout-main-container {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    justify-content: space-between;
+    padding-top: 5rem; /* Menyesuaikan tinggi topbar modern yang tipis */
+    padding-bottom: 0;
+    transition: margin-left var(--layout-section-transition-duration);
+    
+    /* PAKSA PADDING KIRI/KANAN EKSTREM UNTUK SEMUA DEVICE (HP, TABLET, PC) */
+    padding-left: 2px !important;
+    padding-right: 2px !important;
 }
 
+.layout-main {
+    flex: 1 1 auto;
+    padding-bottom: 1.5rem;
+    
+    /* PAKSA LEBAR UTUH 100% DAN HANCURKAN BATASAN MAKSIMAL */
+    width: 100% !important;
+    max-width: none !important;
+    
+    /* Buang margin auto agar halaman melar penuh dari ujung ke ujung */
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+    
+    /* Set padding main ke 0 agar menempel sempurna ke tepi frame container */
+    padding-left: 0px !important;
+    padding-right: 0px !important;
+}
+
+/* ==========================================================================
+   2. ATURAN RESPONSIVE DESKTOP (BREAKPOINT LAPTOP & MONITOR)
+   ========================================================================== */
 @media (min-width: 992px) {
+    /* CATATAN: Perubahan padding bawaan desktop di sini telah dihapus 
+       agar tetap menggunakan padding super rapat (2px) secara konsisten */
+
     .layout-wrapper {
+        /* MODE MENU: OVERLAY (MENU MELAYANG) */
         &.layout-overlay {
             .layout-main-container {
                 margin-left: 0;
-                padding-left: 2rem;
             }
 
             .layout-sidebar {
@@ -39,9 +70,11 @@
             }
         }
 
+        /* MODE MENU: STATIC (MENU MENETAP DI KIRI) */
         &.layout-static {
             .layout-main-container {
-                margin-left: 22rem;
+                /* Jarak kiri otomatis bergeser sejauh lebar sidebar Anda */
+                margin-left: 22rem; 
             }
 
             &.layout-static-inactive {
@@ -52,7 +85,6 @@
 
                 .layout-main-container {
                     margin-left: 0;
-                    padding-left: 2rem;
                 }
             }
         }
@@ -63,6 +95,9 @@
     }
 }
 
+/* ==========================================================================
+   3. ATURAN RESPONSIVE MOBILE & TABLET KECIL
+   ========================================================================== */
 @media (max-width: 991px) {
     .blocked-scroll {
         overflow: hidden;
@@ -71,7 +106,9 @@
     .layout-wrapper {
         .layout-main-container {
             margin-left: 0;
-            padding-left: 2rem;
+            /* Dipaksa seragam menggunakan padding super mini di mobile */
+            padding-left: 2px !important;
+            padding-right: 2px !important;
         }
 
         .layout-sidebar {
@@ -81,6 +118,7 @@
             height: 100vh;
             border-top-left-radius: 0;
             border-bottom-left-radius: 0;
+            z-index: 999; /* Memastikan sidebar menutup konten di atas mobile */
             transition:
                 transform 0.4s cubic-bezier(0.05, 0.74, 0.2, 0.99),
                 left 0.4s cubic-bezier(0.05, 0.74, 0.2, 0.99);
@@ -108,3 +146,9 @@
         }
     }
 }
+
+/* ==========================================================================
+   CATATAN: BAGIAN OMITTED (DIHAPUS)
+   - Media query screen 1960px telah dibuang sepenuhnya agar resolusi layar 
+     monitor raksasa tidak lagi membatasi lebar halaman ke 1400px.
+   ========================================================================== */
